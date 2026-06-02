@@ -1414,9 +1414,7 @@
   }
 
   // ==================== EVENT HANDLERS ====================
-  dom.overlayBtn.addEventListener('click', () => {
-    if (dom.overlayBtn.onclick) dom.overlayBtn.onclick();
-  });
+  // Use onclick property directly (set by startPhase2/endGame before overlay shown)
   dom.rulesBtn.addEventListener('click', () => dom.rulesModal.classList.remove('hidden'));
   dom.rulesClose.addEventListener('click', () => dom.rulesModal.classList.add('hidden'));
   dom.rulesModal.addEventListener('click', (e) => {
