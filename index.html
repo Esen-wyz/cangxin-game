@@ -192,135 +192,91 @@ function addImpact(x,y,color,size){impacts.push({x,y,color,size:size||40,life:0.
 function addShake(amt){screenShake=Math.max(screenShake,amt);}
 function addFlash(color,alpha){flashAlpha=alpha||0.4;flashColor=color;}
 
-// ═══════════ DRAW FIGHTER ═══════════
-function drawFighter(cx,cy,facing,state){
-  // facing: 1=right, -1=left
-  const f=facing,flip=x=>cx+f*x;
-  const s=state||{};
-
+// ═══════════ DRAW SHADOW FIGHTER (Shadow Fight style) ═══════════
+function drawShadowFighter(cx,cy,facing,glowColor,state){
+  const f=facing,flip=x=>cx+f*x,s=state||{};
   ctx.save();
-  // Shadow
-  ctx.fillStyle='rgba(0,0,0,0.3)';ctx.beginPath();ctx.ellipse(cx,cy+62,28,5,0,0,Math.PI*2);ctx.fill();
+  // Glow layer (drawn first = behind)
+  const glowGrad=ctx.createRadialGradient(cx,cy-10,10,cx,cy-10,65);
+  glowGrad.addColorStop(0,glowColor.replace('1)','0.25)').replace('rgb','rgba'));
+  glowGrad.addColorStop(1,'transparent');
+  ctx.fillStyle=glowGrad;ctx.beginPath();ctx.arc(cx,cy,55,0,Math.PI*2);ctx.fill();
 
-  // --- LEGS ---
-  const legSpread=s.kicking?18:8;
-  // Back leg
-  ctx.fillStyle='#1a3560';ctx.beginPath();ctx.roundRect(flip(-legSpread-4),cy+32,10,26,4);ctx.fill();
-  ctx.fillStyle='#1a3050';ctx.beginPath();ctx.roundRect(flip(-legSpread-6),cy+54,12,6,3);ctx.fill();
-  // Front leg
-  ctx.fillStyle='#1e4078';ctx.beginPath();ctx.roundRect(flip(legSpread-3),cy+34,10,24,4);ctx.fill();
-  ctx.fillStyle='#1a3050';ctx.beginPath();ctx.roundRect(flip(legSpread-5),cy+54,12,6,3);ctx.fill();
+  // Ground shadow
+  ctx.fillStyle='rgba(0,0,0,0.4)';ctx.beginPath();ctx.ellipse(cx,cy+58,24,4,0,0,Math.PI*2);ctx.fill();
 
-  // --- TORSO ---
-  const torsoGrad=ctx.createLinearGradient(cx,cy-8,cx,cy+24);
-  torsoGrad.addColorStop(0,'#3178c6');torsoGrad.addColorStop(0.5,'#2868b0');torsoGrad.addColorStop(1,'#1a4a80');
-  ctx.fillStyle=torsoGrad;
-  ctx.beginPath();ctx.moveTo(flip(-16),cy-6);ctx.lineTo(flip(16),cy-6);ctx.lineTo(flip(14),cy+26);ctx.lineTo(flip(-14),cy+26);ctx.closePath();ctx.fill();
-  // Gi lines
-  ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(flip(-6),cy-6);ctx.lineTo(flip(-4),cy+26);ctx.stroke();
-  // Belt
-  ctx.fillStyle='#d4a030';ctx.beginPath();ctx.roundRect(flip(-15),cy+22,30,5,2);ctx.fill();
-  ctx.fillStyle='#c9a96e';ctx.beginPath();ctx.roundRect(flip(-2),cy+20,6,8,2);ctx.fill();
+  // Body drawing function (silhouette)
+  function drawBody(isEnemy){
+    // LEGS
+    const ls=s.kicking?16:7;
+    ctx.fillStyle='#111';ctx.strokeStyle=glowColor;ctx.lineWidth=1.5;
+    // Back leg
+    ctx.beginPath();ctx.roundRect(flip(-ls-3),cy+30,10,26,4);ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.roundRect(flip(-ls-5),cy+52,12,6,3);ctx.fill();ctx.stroke();
+    // Front leg
+    ctx.beginPath();ctx.roundRect(flip(ls-2),cy+32,10,24,4);ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.roundRect(flip(ls-4),cy+52,12,6,3);ctx.fill();ctx.stroke();
 
-  // --- ARMS ---
-  const armExt=s.punching?22:0;
-  // Back arm
-  ctx.fillStyle='#2868b0';ctx.save();ctx.translate(flip(-12),cy-4);ctx.rotate(f*0.5);ctx.fillRect(-4,0,8,20);ctx.restore();
-  ctx.fillStyle='#f0c8a0';ctx.beginPath();ctx.arc(flip(-12)+f*Math.sin(0.5)*20,cy-4+Math.cos(0.5)*20,6,0,Math.PI*2);ctx.fill();
-  // Front arm (attacking arm)
-  ctx.fillStyle='#3178c6';ctx.save();ctx.translate(flip(10),cy-2);
-  if(s.punching)ctx.rotate(f*(-0.8));else ctx.rotate(f*(-0.3));
-  ctx.fillRect(-4,0,8,22);ctx.restore();
-  // Fist
-  ctx.fillStyle='#f5d0a0';ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=1;
-  if(s.punching){
-    ctx.beginPath();ctx.arc(flip(10)+f*Math.sin(-0.8)*22,cy-2+Math.cos(-0.8)*22,7,0,Math.PI*2);ctx.fill();ctx.stroke();
-  }else{
-    ctx.beginPath();ctx.arc(flip(10)+f*Math.sin(-0.3)*22,cy-2+Math.cos(-0.3)*22,6,0,Math.PI*2);ctx.fill();ctx.stroke();
+    // TORSO - trapezoid
+    ctx.beginPath();ctx.moveTo(flip(-17),cy-6);ctx.lineTo(flip(17),cy-6);ctx.lineTo(flip(15),cy+26);ctx.lineTo(flip(-15),cy+26);ctx.closePath();ctx.fill();ctx.stroke();
+    // Belt
+    ctx.beginPath();ctx.roundRect(flip(-16),cy+20,32,6,3);ctx.fillStyle='#0a0a0a';ctx.fill();ctx.stroke();
+    // Belt knot
+    ctx.beginPath();ctx.roundRect(flip(-3),cy+18,8,10,2);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#111';
+
+    // BACK ARM
+    ctx.save();ctx.translate(flip(-13),cy-4);ctx.rotate(f*0.45);ctx.beginPath();ctx.roundRect(-5,0,10,22,4);ctx.fill();ctx.stroke();ctx.restore();
+    // Back fist
+    ctx.beginPath();ctx.arc(flip(-13)+f*Math.sin(0.45)*22,cy-4+Math.cos(0.45)*22,7,0,Math.PI*2);ctx.fill();ctx.stroke();
+
+    // FRONT ARM (punching arm)
+    ctx.save();ctx.translate(flip(11),cy-2);
+    const aRot=s.punching?f*(-1.0):f*(-0.3);
+    ctx.rotate(aRot);
+    ctx.beginPath();ctx.roundRect(-5,0,10,24,4);ctx.fill();ctx.stroke();
+    ctx.restore();
+    // Front fist
+    const fx=flip(11)+f*Math.sin(aRot||-0.3)*24,fy=cy-2+Math.cos(aRot||-0.3)*24;
+    ctx.beginPath();ctx.arc(fx,fy,s.punching?8:7,0,Math.PI*2);ctx.fill();ctx.stroke();
+
+    // NECK
+    ctx.beginPath();ctx.roundRect(flip(-5),cy-14,10,10,3);ctx.fill();ctx.stroke();
+
+    // HEAD
+    ctx.beginPath();ctx.arc(cx,cy-24,16,0,Math.PI*2);ctx.fill();ctx.stroke();
+    // Hair spikes
+    ctx.beginPath();ctx.moveTo(flip(-15),cy-28);ctx.lineTo(flip(-12),cy-42);ctx.lineTo(flip(-4),cy-30);ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(flip(-2),cy-30);ctx.lineTo(flip(0),cy-44);ctx.lineTo(flip(6),cy-30);ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(flip(4),cy-30);ctx.lineTo(flip(12),cy-40);ctx.lineTo(flip(15),cy-28);ctx.fill();ctx.stroke();
+    // Headband tails
+    ctx.strokeStyle=glowColor;ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(flip(-16),cy-28);ctx.quadraticCurveTo(flip(-22),cy-20,flip(-18),cy-14);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(flip(16),cy-28);ctx.quadraticCurveTo(flip(22),cy-20,flip(18),cy-14);ctx.stroke();
+    ctx.strokeStyle=glowColor;ctx.lineWidth=1.5;
+
+    // GLOWING EYES
+    ctx.fillStyle='#fff';ctx.shadowColor=glowColor;ctx.shadowBlur=8;
+    ctx.beginPath();ctx.arc(flip(-6),cy-26,2.5,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(flip(6),cy-26,2.5,0,Math.PI*2);ctx.fill();
+    ctx.shadowBlur=0;
+
+    // Mouth
+    if(s.dead){
+      ctx.strokeStyle=glowColor;ctx.beginPath();ctx.arc(cx,cy-18,5,0,Math.PI);ctx.stroke();
+    }else if(s.hit){
+      ctx.fillStyle='#fff';ctx.shadowColor='#f00';ctx.shadowBlur=6;
+      ctx.beginPath();ctx.arc(cx,cy-18,5,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+    }
   }
 
-  // --- NECK ---
-  ctx.fillStyle='#f0c8a0';ctx.beginPath();ctx.roundRect(flip(-4),cy-12,8,8,3);ctx.fill();
+  drawBody(false);
 
-  // --- HEAD ---
-  ctx.fillStyle='#f5d0a0';ctx.beginPath();ctx.arc(cx,cy-20,14,0,Math.PI*2);ctx.fill();
-  // Hair
-  ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(cx,cy-24,15,Math.PI,Math.PI*2);ctx.fill();
-  ctx.beginPath();ctx.moveTo(flip(-14),cy-22);ctx.lineTo(flip(-10),cy-30);ctx.lineTo(flip(2),cy-22);ctx.fill();
-  ctx.beginPath();ctx.moveTo(flip(-2),cy-22);ctx.lineTo(flip(10),cy-30);ctx.lineTo(flip(14),cy-22);ctx.fill();
-  // Headband
-  ctx.strokeStyle='#e74c3c';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(cx,cy-24,14.5,1.2,1.9);ctx.stroke();
-  // Eyes
-  ctx.fillStyle='#111';ctx.beginPath();ctx.arc(flip(-5),cy-22,2.5,0,Math.PI*2);ctx.fill();
-  ctx.beginPath();ctx.arc(flip(5),cy-22,2.5,0,Math.PI*2);ctx.fill();
-  // Eye white highlights
-  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(flip(-4.5),cy-23,1,0,Math.PI*2);ctx.fill();
-  ctx.beginPath();ctx.arc(flip(5.5),cy-23,1,0,Math.PI*2);ctx.fill();
-  // Eyebrows
-  ctx.strokeStyle='#222';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(flip(-8),cy-26);ctx.lineTo(flip(-1),cy-25.5);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(flip(1),cy-25.5);ctx.lineTo(flip(8),cy-26);ctx.stroke();
-  // Mouth
-  if(s.dead){ctx.strokeStyle='#222';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(cx,cy-15,4,0,Math.PI);ctx.stroke()}
-  else if(s.hit){ctx.beginPath();ctx.arc(cx,cy-14,5,0,Math.PI*2);ctx.fillStyle='#111';ctx.fill()}
-  else{ctx.fillStyle='#c08070';ctx.beginPath();ctx.arc(cx,cy-16,3,0,Math.PI);ctx.fill()}
-
-  ctx.restore();
-}
-
-// ═══════════ DRAW ENEMY FIGHTER ═══════════
-function drawEnemy(cx,cy,facing,state){
-  const f=facing,flip=x=>cx+f*x;
-  const s=state||{};
-
-  ctx.save();
-  ctx.fillStyle='rgba(0,0,0,0.3)';ctx.beginPath();ctx.ellipse(cx,cy+62,28,5,0,0,Math.PI*2);ctx.fill();
-
-  const legSpread=s.kicking?18:8;
-  ctx.fillStyle='#3d1515';ctx.beginPath();ctx.roundRect(flip(-legSpread-4),cy+32,10,26,4);ctx.fill();
-  ctx.fillStyle='#2a0e0e';ctx.beginPath();ctx.roundRect(flip(-legSpread-6),cy+54,12,6,3);ctx.fill();
-  ctx.fillStyle='#4d2020';ctx.beginPath();ctx.roundRect(flip(legSpread-3),cy+34,10,24,4);ctx.fill();
-  ctx.fillStyle='#2a0e0e';ctx.beginPath();ctx.roundRect(flip(legSpread-5),cy+54,12,6,3);ctx.fill();
-
-  const torsoGrad=ctx.createLinearGradient(cx,cy-8,cx,cy+24);
-  torsoGrad.addColorStop(0,'#b5302a');torsoGrad.addColorStop(0.5,'#922520');torsoGrad.addColorStop(1,'#6b1815');
-  ctx.fillStyle=torsoGrad;
-  ctx.beginPath();ctx.moveTo(flip(-16),cy-6);ctx.lineTo(flip(16),cy-6);ctx.lineTo(flip(14),cy+26);ctx.lineTo(flip(-14),cy+26);ctx.closePath();ctx.fill();
-  ctx.strokeStyle='rgba(255,255,255,0.05)';ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(flip(-6),cy-6);ctx.lineTo(flip(-4),cy+26);ctx.stroke();
-  ctx.fillStyle='#d4a030';ctx.beginPath();ctx.roundRect(flip(-15),cy+22,30,5,2);ctx.fill();
-  ctx.fillStyle='#c9a96e';ctx.beginPath();ctx.roundRect(flip(-2),cy+20,6,8,2);ctx.fill();
-
-  // Arms
-  ctx.fillStyle='#922520';ctx.save();ctx.translate(flip(-12),cy-4);ctx.rotate(f*0.5);ctx.fillRect(-4,0,8,20);ctx.restore();
-  ctx.fillStyle='#d4a878';ctx.beginPath();ctx.arc(flip(-12)+f*Math.sin(0.5)*20,cy-4+Math.cos(0.5)*20,6,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#b5302a';ctx.save();ctx.translate(flip(10),cy-2);
-  if(s.punching)ctx.rotate(f*(-0.8));else ctx.rotate(f*(-0.3));
-  ctx.fillRect(-4,0,8,22);ctx.restore();
-  ctx.fillStyle='#d4a878';ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=1;
-  if(s.punching){
-    ctx.beginPath();ctx.arc(flip(10)+f*Math.sin(-0.8)*22,cy-2+Math.cos(-0.8)*22,7,0,Math.PI*2);ctx.fill();ctx.stroke();
-  }else{
-    ctx.beginPath();ctx.arc(flip(10)+f*Math.sin(-0.3)*22,cy-2+Math.cos(-0.3)*22,6,0,Math.PI*2);ctx.fill();ctx.stroke();
+  // Second glow pass for intense states
+  if(s.hit){
+    ctx.fillStyle=glowColor.replace('1)','0.3)').replace('rgb','rgba');
+    ctx.beginPath();ctx.arc(cx,cy-10,45,0,Math.PI*2);ctx.fill();
   }
-
-  ctx.fillStyle='#d4a878';ctx.beginPath();ctx.roundRect(flip(-4),cy-12,8,8,3);ctx.fill();
-  ctx.fillStyle='#d4a878';ctx.beginPath();ctx.arc(cx,cy-20,14,0,Math.PI*2);ctx.fill();
-  // Wild hair
-  ctx.fillStyle='#3d1010';ctx.beginPath();ctx.arc(cx,cy-24,15,Math.PI,Math.PI*2);ctx.fill();
-  ctx.beginPath();ctx.moveTo(flip(-14),cy-22);ctx.lineTo(flip(-12),cy-33);ctx.lineTo(flip(-4),cy-22);ctx.fill();
-  ctx.beginPath();ctx.moveTo(flip(4),cy-22);ctx.lineTo(flip(12),cy-33);ctx.lineTo(flip(14),cy-22);ctx.fill();
-  // Headband
-  ctx.strokeStyle='#2c3e50';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(cx,cy-24,14.5,1.2,1.9);ctx.stroke();
-  ctx.fillStyle='#111';ctx.beginPath();ctx.arc(flip(-5),cy-22,2.5,0,Math.PI*2);ctx.fill();
-  ctx.beginPath();ctx.arc(flip(5),cy-22,2.5,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#f44';ctx.beginPath();ctx.arc(flip(-4.5),cy-23,1,0,Math.PI*2);ctx.fill(); // red glint
-  ctx.beginPath();ctx.arc(flip(5.5),cy-23,1,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle='#222';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(flip(-9),cy-27);ctx.lineTo(flip(-2),cy-26);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(flip(2),cy-26);ctx.lineTo(flip(9),cy-27);ctx.stroke();
-  if(s.dead){ctx.strokeStyle='#222';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(cx,cy-15,4,0,Math.PI);ctx.stroke()}
-  else if(s.hit){ctx.beginPath();ctx.arc(cx,cy-14,5,0,Math.PI*2);ctx.fillStyle='#111';ctx.fill()}
-  else{ctx.fillStyle='#b07060';ctx.beginPath();ctx.arc(cx,cy-16,3,0,Math.PI);ctx.fill()}
 
   ctx.restore();
 }
@@ -363,8 +319,8 @@ function renderFrame(){
   ctx.save();ctx.translate(sx,sy);
 
   // Draw fighters
-  drawFighter(pAnim.x,pAnim.y,1,pAnim.state);
-  drawEnemy(eAnim.x,eAnim.y,-1,eAnim.state);
+  drawShadowFighter(pAnim.x,pAnim.y,1,'rgb(68,170,255)',pAnim.state);
+  drawShadowFighter(eAnim.x,eAnim.y,-1,'rgb(255,80,80)',eAnim.state);
 
   // Particles
   for(const p of particles){
