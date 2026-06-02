@@ -5,204 +5,239 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>苍心 · 气功对决</title>
 <style>
-:root {
-  --bg:#0a0a14; --surf:#141428; --gold:#c9a96e; --gol2:#e0c78a;
-  --txt:#d5cfc0; --dim:#8888a0; --dan:#c0392b; --p2:#f1c40f; --p3:#e056a0;
-}
+:root{--bg:#0a0a14;--surf:#141428;--gold:#c9a96e;--gol2:#e0c78a;--txt:#d5cfc0;--dim:#8888a0;--dan:#c0392b;--p2:#f1c40f;--p3:#e056a0}
 *{margin:0;padding:0;box-sizing:border-box}
-body{
-  font-family:"PingFang SC","Microsoft YaHei",sans-serif;
-  background:var(--bg); color:var(--txt); min-height:100vh;
-  display:flex; justify-content:center; align-items:center;
-  overflow:hidden; user-select:none; -webkit-user-select:none;
-  background-image:radial-gradient(ellipse at 50% 40%,rgba(201,169,110,0.06) 0%,transparent 70%);
-}
-#game{width:100%;max-width:480px;height:100vh;display:flex;flex-direction:column;position:relative;}
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--txt);height:100vh;display:flex;justify-content:center;align-items:center;overflow:hidden;user-select:none;-webkit-user-select:none}
+#game{width:100%;max-width:480px;height:100vh;display:flex;flex-direction:column;position:relative}
 
-/* ── Top bar ── */
-#topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;gap:8px;}
-#topbar h1{font-size:1.3em;background:linear-gradient(180deg,var(--gol2),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;white-space:nowrap;}
-#phase-tag{font-size:0.7em;padding:3px 8px;border-radius:6px;font-weight:bold;white-space:nowrap;}
-#phase-tag.p1{background:rgba(201,169,110,0.15);color:var(--gold);border:1px solid rgba(201,169,110,0.3);}
-#phase-tag.p2{background:rgba(241,196,15,0.15);color:var(--p2);border:1px solid rgba(241,196,15,0.3);}
-#phase-tag.p3{background:rgba(224,86,160,0.15);color:var(--p3);border:1px solid rgba(224,86,160,0.3);}
-#score-display{display:flex;align-items:center;gap:6px;font-size:0.8em;}
-#score-display .sc{font-weight:bold;color:var(--gol2);}
-#score-display .vs{color:var(--dim);font-size:0.7em;}
-#round-info{font-size:0.65em;color:var(--dim);text-align:center;padding:0 0 2px;}
+/* Top bar */
+#topbar{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;gap:6px;z-index:5}
+#topbar h1{font-size:1.2em;background:linear-gradient(180deg,var(--gol2),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;white-space:nowrap}
+#phase-tag{font-size:0.65em;padding:2px 7px;border-radius:5px;font-weight:bold;white-space:nowrap}
+#phase-tag.p1{background:rgba(201,169,110,0.15);color:var(--gold);border:1px solid rgba(201,169,110,0.3)}
+#phase-tag.p2{background:rgba(241,196,15,0.15);color:var(--p2);border:1px solid rgba(241,196,15,0.3)}
+#phase-tag.p3{background:rgba(224,86,160,0.15);color:var(--p3);border:1px solid rgba(224,86,160,0.3)}
+#scoredisp{display:flex;align-items:center;gap:4px;font-size:0.75em}
+#scoredisp .sc{font-weight:bold;color:var(--gol2);font-size:1.2em}
+#scoredisp .vs{color:var(--dim);font-size:0.7em}
+#round-info{font-size:0.6em;color:var(--dim);text-align:center;padding:0 0 2px;z-index:5}
 
-/* ── Battle Arena ── */
-#arena{
-  flex:1; position:relative; overflow:hidden;
-  background:linear-gradient(180deg,rgba(20,20,40,0.6) 0%,rgba(10,10,20,0.9) 100%);
-  border-top:1px solid rgba(255,255,255,0.05); border-bottom:1px solid rgba(255,255,255,0.05);
-  min-height:260px;
-}
+/* Arena */
+#arena{flex:1;position:relative;overflow:hidden;background:linear-gradient(180deg,#1a1a35 0%,#0d0d1a 40%,#1a0a0a 100%);border-top:1px solid rgba(255,255,255,0.04);border-bottom:1px solid rgba(255,255,255,0.04);min-height:280px}
+#arena.shake{animation:screenShake 0.5s ease-out}
+#arena.shake-heavy{animation:screenShakeHeavy 0.6s ease-out}
+@keyframes screenShake{0%,100%{transform:translate(0)}10%{transform:translate(-3px,-1px)}20%{transform:translate(3px,2px)}30%{transform:translate(-2px,-2px)}40%{transform:translate(2px,1px)}50%{transform:translate(-1px,-1px)}60%{transform:translate(1px,2px)}70%{transform:translate(-2px,0)}80%{transform:translate(2px,-1px)}90%{transform:translate(-1px,1px)}}
+@keyframes screenShakeHeavy{0%,100%{transform:translate(0)}8%{transform:translate(-6px,-3px)}16%{transform:translate(5px,4px)}24%{transform:translate(-4px,-1px)}32%{transform:translate(3px,-3px)}40%{transform:translate(-5px,2px)}48%{transform:translate(2px,5px)}56%{transform:translate(-3px,-2px)}64%{transform:translate(4px,1px)}72%{transform:translate(-1px,-4px)}80%{transform:translate(3px,3px)}88%{transform:translate(-2px,1px)}}
+
 /* Ground */
-#ground{position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,rgba(201,169,110,0.3),transparent);}
+#ground{position:absolute;bottom:18%;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(201,169,110,0.25),transparent)}
+#ground::after{content:'';position:absolute;top:-1px;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.05),transparent)}
 
-/* ── Characters ── */
-.char{
-  position:absolute; bottom:25px; width:70px; height:100px;
-  transition:transform 0.3s, filter 0.3s;
-}
-#player-char{left:18%;}
-#enemy-char{right:18%;}
-.char.hit{animation:charHit 0.4s ease-out;}
-.char.attack{animation:charLunge 0.4s ease-out;}
-.char.block{filter:brightness(1.3);}
-.char.charge{animation:charCharge 0.6s ease-out;}
-.char.fly{animation:charFly 0.5s ease-out;}
-.char.dead{filter:grayscale(1) brightness(0.5);}
+/* ===== CHARACTERS ===== */
+.char{position:absolute;bottom:20%;width:90px;height:130px;z-index:3;transition:filter 0.2s}
+#player-char{left:10%} #enemy-char{right:10%}
+.char.dead{filter:grayscale(0.8) brightness(0.4)}
+.char.fly-up{animation:flyUp 0.5s ease-out}
+@keyframes flyUp{0%,100%{transform:translateY(0)}50%{transform:translateY(-35px)}}
 
-@keyframes charHit{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(6px)}}
-@keyframes charLunge{0%{transform:translateX(0)}50%{transform:translateX(20px) scale(1.05)}100%{transform:translateX(0)}}
-@keyframes charCharge{0%,100%{filter:brightness(1)}50%{filter:brightness(1.6) drop-shadow(0 0 15px currentColor)}}
-@keyframes charFly{0%{transform:translateY(0)}50%{transform:translateY(-25px)}100%{transform:translateY(0)}}
-#enemy-char.char.attack{animation:charLungeR 0.4s ease-out;}
-@keyframes charLungeR{0%{transform:translateX(0)}50%{transform:translateX(-20px) scale(1.05)}100%{transform:translateX(0)}}
+/* Head */
+.char-head{width:38px;height:40px;border-radius:50% 50% 40% 40%;margin:0 auto;position:relative;z-index:2}
+#player-char .char-head{background:linear-gradient(180deg,#f5d0a0,#e8b888);border:2px solid rgba(0,0,0,0.25)}
+#enemy-char .char-head{background:linear-gradient(180deg,#d4a878,#c09068);border:2px solid rgba(0,0,0,0.3)}
+/* Hair */
+.char-hair{position:absolute;top:-8px;left:-4px;right:-4px;height:22px;border-radius:50% 50% 0 0;z-index:1}
+#player-char .char-hair{background:linear-gradient(180deg,#2c3e50,#1a252f);box-shadow:0 2px 4px rgba(0,0,0,0.3)}
+#enemy-char .char-hair{background:linear-gradient(180deg,#5d1a1a,#3d1010);box-shadow:0 2px 4px rgba(0,0,0,0.3)}
+.char-hair::before{content:'';position:absolute;top:2px;width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:8px solid}
+#player-char .char-hair::before{left:6px;border-bottom-color:#2c3e50}
+#enemy-char .char-hair::before{right:6px;border-bottom-color:#5d1a1a}
+/* Eyes */
+.char-eyes{position:absolute;top:12px;left:50%;transform:translateX(-50%);display:flex;gap:8px}
+.char-eye{width:6px;height:7px;border-radius:50%;background:#111}
+.char-eyebrow{position:absolute;width:8px;height:3px;top:-3px;background:#333;border-radius:2px}
+#enemy-char .char-eyebrow{transform:rotate(5deg)}
 
-/* Character body parts */
-.char-head{width:32px;height:32px;border-radius:50%;margin:0 auto;position:relative;background:#f0c8a0;border:2px solid rgba(0,0,0,0.3);}
-#enemy-char .char-head{background:#d4a080;}
-.char-head::before,.char-head::after{content:'';position:absolute;width:5px;height:5px;border-radius:50%;background:#222;top:10px;}
-.char-head::before{left:8px;}.char-head::after{right:8px;}
-.char-mouth{position:absolute;width:8px;height:3px;border-radius:0 0 4px 4px;background:#222;bottom:7px;left:50%;transform:translateX(-50%);}
-.char-body{width:36px;height:32px;margin:0 auto;border-radius:6px 6px 2px 2px;position:relative;}
-#player-char .char-body{background:linear-gradient(180deg,#3498db,#2471a3);}
-#enemy-char .char-body{background:linear-gradient(180deg,#c0392b,#922b21);}
-.char-belt{position:absolute;width:100%;height:4px;background:var(--gold);bottom:4px;left:0;}
-.char-arm-l,.char-arm-r{position:absolute;width:8px;height:28px;border-radius:4px;top:2px;transition:transform 0.3s;}
-.char-arm-l{left:-6px;transform:rotate(-15deg);}
-.char-arm-r{right:-6px;transform:rotate(15deg);}
-#player-char .char-arm-l,#player-char .char-arm-r{background:#2980b9;}
-#enemy-char .char-arm-l,#enemy-char .char-arm-r{background:#a93226;}
-.char-leg-l,.char-leg-r{position:absolute;width:9px;height:22px;border-radius:4px;bottom:-22px;}
-.char-leg-l{left:6px;}.char-leg-r{right:6px;}
-#player-char .char-leg-l,#player-char .char-leg-r{background:#1a5276;}
-#enemy-char .char-leg-l,#enemy-char .char-leg-r{background:#641e16;}
+/* Body */
+.char-torso{width:32px;height:36px;margin:0 auto;border-radius:8px 8px 4px 4px;position:relative;z-index:2;transition:transform 0.3s}
+#player-char .char-torso{background:linear-gradient(180deg,#3498db,#1e6fa0);box-shadow:inset 0 2px 4px rgba(255,255,255,0.1)}
+#enemy-char .char-torso{background:linear-gradient(180deg,#c0392b,#7b241c);box-shadow:inset 0 2px 4px rgba(255,255,255,0.1)}
+.char-belt{position:absolute;width:100%;height:4px;background:var(--gold);bottom:4px;left:0;border-radius:1px}
 
-/* Character glow */
-.char-glow{position:absolute;inset:-10px;border-radius:50%;opacity:0;transition:opacity 0.3s;pointer-events:none;}
-.char-glow.active{opacity:1;animation:glowPulse 0.6s ease-in-out;}
-@keyframes glowPulse{0%,100%{transform:scale(1);opacity:0.3}50%{transform:scale(1.2);opacity:0.8}}
-#player-char .char-glow{background:radial-gradient(circle,rgba(52,152,219,0.4),transparent);}
-#enemy-char .char-glow{background:radial-gradient(circle,rgba(231,76,60,0.4),transparent);}
+/* Arms & Fists */
+.char-fist{position:absolute;width:14px;height:14px;border-radius:50%;z-index:3;transition:transform 0.25s}
+#player-char .char-fist{background:linear-gradient(180deg,#f5d0a0,#d4a878);border:2px solid rgba(0,0,0,0.2);box-shadow:inset 0 1px 2px rgba(255,255,255,0.2)}
+#enemy-char .char-fist{background:linear-gradient(180deg,#d4a878,#b89068);border:2px solid rgba(0,0,0,0.25);box-shadow:inset 0 1px 2px rgba(255,255,255,0.15)}
+.fist-front{top:14px;}#player-char .fist-front{right:-6px}#enemy-char .fist-front{left:-6px}
+.fist-back{top:8px;}#player-char .fist-back{left:-8px}#enemy-char .fist-back{right:-8px}
+.char-arm{position:absolute;width:8px;height:20px;border-radius:3px;z-index:1;transform-origin:top center;transition:transform 0.3s}
+.arm-front{top:2px;}#player-char .arm-front{right:0;transform:rotate(-30deg)}#enemy-char .arm-front{left:0;transform:rotate(30deg)}
+.arm-back{top:3px;}#player-char .arm-back{left:-2px;transform:rotate(20deg)}#enemy-char .arm-back{right:-2px;transform:rotate(-20deg)}
+#player-char .char-arm{background:linear-gradient(180deg,#3498db,#2176a7)}
+#enemy-char .char-arm{background:linear-gradient(180deg,#c0392b,#8b1a1a)}
 
-/* ── Projectiles ── */
-.proj{position:absolute;z-index:10;pointer-events:none;transition:all 0.5s cubic-bezier(0.25,0.1,0.25,1);opacity:0;}
-.proj.fly{opacity:1;}
-.proj-ball{width:22px;height:22px;border-radius:50%;}
-.proj-bolt{font-size:28px;text-align:center;line-height:1;}
-.proj-slash{font-size:26px;text-align:center;line-height:1;}
-.proj-burst{font-size:32px;text-align:center;line-height:1;}
+/* Legs */
+.char-leg{position:absolute;width:12px;height:28px;border-radius:5px;bottom:-40px;z-index:0;transition:transform 0.3s}
+#player-char .char-leg{background:linear-gradient(180deg,#1a5276,#0e3450)}
+#enemy-char .char-leg{background:linear-gradient(180deg,#641e16,#3d0f0a)}
+.leg-front{left:6px;transform:rotate(5deg)}.leg-back{right:6px;transform:rotate(-3deg)}
+.char-foot{position:absolute;width:16px;height:8px;border-radius:50%;bottom:-6px;left:-2px}
+#player-char .char-foot{background:#1a3a50}
+#enemy-char .char-foot{background:#3d1510}
 
-/* ── Shield barrier ── */
-.shield-barrier{position:absolute;width:50px;height:70px;border-radius:50%;border:3px solid rgba(52,152,219,0.6);background:rgba(52,152,219,0.1);z-index:9;pointer-events:none;opacity:0;transition:opacity 0.2s;}
-.shield-barrier.on{opacity:1;animation:shieldPulse 0.5s ease-out;}
-@keyframes shieldPulse{0%{transform:scale(0.8)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+/* Character action animations */
+.char.punch{animation:charPunch 0.35s ease-out}
+.char.kick{animation:charKick 0.4s ease-out}
+.char.uppercut{animation:charUpper 0.45s ease-out}
+.char.charge-up{animation:chargeAura 0.7s ease-out}
+.char.block-stance{animation:blockPose 0.3s ease-out}
+.char.take-hit{animation:takeHit 0.45s ease-out}
+.char.take-heavy{animation:takeHeavy 0.55s ease-out}
+@keyframes charPunch{0%{transform:translateX(0)}30%{transform:translateX(25px) scale(1.06)}100%{transform:translateX(0)}}
+@keyframes charKick{0%{transform:translateX(0) rotate(0)}30%{transform:translateX(20px) rotate(-5deg) scale(1.05)}100%{transform:translateX(0) rotate(0)}}
+@keyframes charUpper{0%{transform:translateY(0)}30%{transform:translateY(-10px) scale(1.08)}100%{transform:translateY(0)}}
+@keyframes chargeAura{0%,100%{filter:brightness(1)}40%{filter:brightness(1.8) drop-shadow(0 0 20px currentColor)}70%{filter:brightness(1.5) drop-shadow(0 0 12px currentColor)}}
+@keyframes blockPose{0%{transform:translateX(0)}50%{transform:translateX(-3px) scale(1.03)}100%{transform:translateX(0)}}
+@keyframes takeHit{0%{transform:translateX(0)}20%{transform:translateX(-10px)}35%{transform:translateX(6px)}55%{transform:translateX(-4px)}75%{transform:translateX(2px)}100%{transform:translateX(0)}}
+@keyframes takeHeavy{0%{transform:translateX(0)}15%{transform:translateX(-15px) rotate(-5deg)}30%{transform:translateX(8px)}45%{transform:translateX(-6px)}60%{transform:translateX(3px)}80%{transform:translateX(-1px)}100%{transform:translateX(0)}}
+#enemy-char.punch{animation:charPunchR 0.35s ease-out}
+#enemy-char.kick{animation:charKickR 0.4s ease-out}
+#enemy-char.take-hit{animation:takeHitR 0.45s ease-out}
+#enemy-char.take-heavy{animation:takeHeavyR 0.55s ease-out}
+@keyframes charPunchR{0%{transform:translateX(0)}30%{transform:translateX(-25px) scale(1.06)}100%{transform:translateX(0)}}
+@keyframes charKickR{0%{transform:translateX(0) rotate(0)}30%{transform:translateX(-20px) rotate(5deg) scale(1.05)}100%{transform:translateX(0) rotate(0)}}
+@keyframes takeHitR{0%{transform:translateX(0)}20%{transform:translateX(10px)}35%{transform:translateX(-6px)}55%{transform:translateX(4px)}75%{transform:translateX(-2px)}100%{transform:translateX(0)}}
+@keyframes takeHeavyR{0%{transform:translateX(0)}15%{transform:translateX(15px) rotate(5deg)}30%{transform:translateX(-8px)}45%{transform:translateX(6px)}60%{transform:translateX(-3px)}80%{transform:translateX(1px)}100%{transform:translateX(0)}}
 
-/* ── Impact FX ── */
-.impact{position:absolute;z-index:15;pointer-events:none;opacity:0;font-size:30px;text-align:center;line-height:1;transition:all 0.5s;}
-.impact.show{opacity:1;animation:impactPop 0.5s ease-out;}
-@keyframes impactPop{0%{transform:scale(0.3);opacity:0}30%{transform:scale(1.3);opacity:1}100%{transform:scale(1.5);opacity:0}}
+/* ===== AURA & EFFECTS ===== */
+.aura{position:absolute;inset:-15px;border-radius:50%;opacity:0;pointer-events:none;z-index:1;transition:opacity 0.3s}
+.aura.fire{opacity:1;background:radial-gradient(circle,var(--ac, rgba(52,152,219,0.5)) 0%,transparent 70%);animation:auraPulse 0.4s ease-in-out infinite}
+@keyframes auraPulse{0%,100%{transform:scale(0.9);opacity:0.4}50%{transform:scale(1.2);opacity:0.9}}
 
-/* ── Result text ── */
-#result-pop{position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);z-index:20;pointer-events:none;font-weight:bold;font-size:1.1em;text-align:center;opacity:0;transition:all 0.3s;}
-#result-pop.show{opacity:1;}
-#result-pop.win{color:#2ecc71;text-shadow:0 0 10px rgba(46,204,113,0.5);}
-#result-pop.lose{color:var(--dan);text-shadow:0 0 10px rgba(192,57,43,0.5);}
-#result-pop.tie{color:var(--gold);}
+/* Charge particles */
+.particle{position:absolute;pointer-events:none;z-index:8;animation:particleRise 0.8s ease-out forwards}
+@keyframes particleRise{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-60px) scale(0);opacity:0}}
 
-/* ── Energy bars (on characters) ── */
-.char-energy{position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);display:flex;gap:2px;}
-.char-energy .edot{width:6px;height:6px;border-radius:50%;background:#333;transition:all 0.3s;}
-.char-energy .edot.on{background:#f39c12;box-shadow:0 0 4px #f39c12;}
+/* Shield */
+.shield-fx{position:absolute;width:55px;height:75px;border-radius:10px;pointer-events:none;z-index:9;opacity:0;transition:opacity 0.15s}
+.shield-fx.on{opacity:1;animation:shieldAppear 0.4s ease-out}
+@keyframes shieldAppear{0%{transform:scale(0.5);opacity:0}40%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+.shield-fx-inner{width:100%;height:100%;border-radius:10px;background:linear-gradient(135deg,rgba(52,152,219,0.5),rgba(100,180,255,0.2));border:2px solid rgba(100,180,255,0.6);box-shadow:0 0 20px rgba(52,152,219,0.4),inset 0 0 15px rgba(100,180,255,0.15)}
+.shield-break{position:absolute;inset:0;border-radius:10px;background:transparent;border:2px solid rgba(255,200,50,0.8);animation:shieldBreak 0.5s ease-out forwards;pointer-events:none;z-index:10}
+@keyframes shieldBreak{0%{transform:scale(1);opacity:1}100%{transform:scale(2);opacity:0;border-width:0}}
 
-/* ── Card-style moves ── */
-#card-area{background:var(--surf);padding:8px;border-top:1px solid rgba(255,255,255,0.08);}
-#card-tabs{display:flex;gap:3px;justify-content:center;margin-bottom:6px;}
-#card-tabs .ctab{padding:4px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:var(--dim);font-size:0.65em;cursor:pointer;font-family:inherit;}
-#card-tabs .ctab.on{background:rgba(201,169,110,0.12);border-color:var(--gold);color:var(--gold);}
-#card-tabs .ctab.p2tab.on{background:rgba(241,196,15,0.12);border-color:var(--p2);color:var(--p2);}
-#card-tabs .ctab.p3tab.on{background:rgba(224,86,160,0.12);border-color:var(--p3);color:var(--p3);}
-#cards-row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;}
-.card{
-  width:68px; padding:8px 4px; border-radius:10px;
-  border:2px solid rgba(255,255,255,0.1); background:rgba(20,20,40,0.9);
-  color:var(--txt); cursor:pointer; font-size:0.7em; font-weight:bold;
-  font-family:inherit; transition:all 0.15s; text-align:center;
-  display:flex; flex-direction:column; align-items:center; gap:2px;
-  position:relative;
-}
-.card:active:not(:disabled){transform:scale(0.93);}
-.card:disabled{opacity:0.3;cursor:not-allowed;filter:grayscale(0.5);}
-.card .cicon{font-size:1.5em;line-height:1;}
-.card .cname{font-size:0.85em;}
-.card .ccost{font-size:0.65em;opacity:0.7;}
-.card .ccharge{font-size:0.6em;color:#f39c12;font-weight:bold;}
-/* Card borders by type */
-.card.charge{border-color:rgba(46,204,113,0.4);}
-.card.charge:not(:disabled):hover{background:rgba(46,204,113,0.12);}
-.card.shield{border-color:rgba(52,152,219,0.4);}
-.card.shield:not(:disabled):hover{background:rgba(52,152,219,0.12);}
-.card.flyshield{border-color:rgba(100,220,200,0.4);}
-.card.flyshield:not(:disabled):hover{background:rgba(100,220,200,0.12);}
-.card.attack{border-color:rgba(231,76,60,0.3);}
-.card.attack:not(:disabled):hover{background:rgba(231,76,60,0.1);}
-/* Highlight for bonus cards */
-.card.p2card:not(:disabled){border-color:rgba(241,196,15,0.45);box-shadow:0 0 6px rgba(241,196,15,0.1);}
-.card.p3card:not(:disabled){border-color:rgba(224,86,160,0.45);box-shadow:0 0 6px rgba(224,86,160,0.1);}
+/* ===== PROJECTILES ===== */
+.proj{position:absolute;pointer-events:none;z-index:10;filter:drop-shadow(0 0 6px currentColor)}
+.proj.flying{transition:all 0.45s cubic-bezier(0.15,0.8,0.3,1)}
+.proj.hit{transform:scale(3);opacity:0;transition:all 0.2s ease-out}
 
-/* ── Overlay ── */
-#overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:flex;justify-content:center;align-items:center;z-index:100;backdrop-filter:blur(4px);}
-#overlay.hidden{display:none;}
-#overlay-box{background:var(--surf);border-radius:18px;border:2px solid var(--gold);padding:24px 18px;text-align:center;max-width:360px;width:90%;max-height:85vh;overflow-y:auto;animation:popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275);}
+/* Wave (波波) */
+.proj-wave{width:22px;height:22px;border-radius:50%;background:radial-gradient(circle,rgba(100,200,255,0.9),rgba(50,150,255,0.4));box-shadow:0 0 15px rgba(100,200,255,0.6),0 0 30px rgba(50,150,255,0.3)}
+/* Bolt (六电) */
+.proj-bolt{font-size:34px;text-align:center;line-height:1;filter:drop-shadow(0 0 10px #ff0) drop-shadow(0 0 20px #fa0)}
+/* Fire (搓搓) */
+.proj-fire{font-size:30px;text-align:center;line-height:1;filter:drop-shadow(0 0 8px #f60) drop-shadow(0 0 16px #f30)}
+/* Dark (八嘎) */
+.proj-dark{font-size:32px;text-align:center;line-height:1;filter:drop-shadow(0 0 12px #a0f) drop-shadow(0 0 24px #60a)}
+/* Pegasus (天马) */
+.proj-pegasus{font-size:28px;text-align:center;line-height:1;filter:drop-shadow(0 0 8px #ff0) drop-shadow(0 0 16px #fa0)}
+/* Meteor (转转拳) */
+.proj-meteor{font-size:30px;text-align:center;line-height:1;filter:drop-shadow(0 0 10px #ff0) drop-shadow(0 0 20px #f80);animation:meteorSpin 0.2s linear infinite}
+@keyframes meteorSpin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+/* Ice (冰雕) */
+.proj-ice{font-size:26px;text-align:center;line-height:1;filter:drop-shadow(0 0 6px #8cf) drop-shadow(0 0 12px #4af)}
+/* Wing (朝翅) */
+.proj-wing{font-size:28px;text-align:center;line-height:1;filter:drop-shadow(0 0 8px #f90) drop-shadow(0 0 16px #f60)}
+/* Ult (冰雕朝翅飞) */
+.proj-ult{font-size:36px;text-align:center;line-height:1;filter:drop-shadow(0 0 15px #f0f) drop-shadow(0 0 30px #f0a) drop-shadow(0 0 45px #fff)}
+
+/* ===== IMPACT ===== */
+.impact-burst{position:absolute;pointer-events:none;z-index:15;opacity:0;font-size:36px;text-align:center;line-height:1;transition:none}
+.impact-burst.go{animation:impactExplode 0.55s ease-out forwards}
+@keyframes impactExplode{0%{transform:scale(0.2);opacity:1}30%{transform:scale(1.4);opacity:1}100%{transform:scale(2.5);opacity:0}}
+.impact-spark{position:absolute;pointer-events:none;z-index:14;width:6px;height:6px;border-radius:50%;animation:sparkFly 0.6s ease-out forwards}
+@keyframes sparkFly{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--sx),var(--sy)) scale(0);opacity:0}}
+
+/* Flash */
+.flash-overlay{position:absolute;inset:0;pointer-events:none;z-index:20;opacity:0;transition:opacity 0.05s}
+.flash-overlay.white{background:#fff;opacity:0.6;transition:opacity 0s}
+.flash-overlay.red{background:#f00;opacity:0.3;transition:opacity 0s}
+
+/* Result text */
+#result-pop{position:absolute;top:35%;left:50%;transform:translate(-50%,-50%);z-index:21;pointer-events:none;font-weight:bold;font-size:1em;text-align:center;opacity:0;transition:all 0.3s;text-shadow:0 0 10px rgba(0,0,0,0.8)}
+#result-pop.show{opacity:1}
+#result-pop.win{color:#2ecc71;text-shadow:0 0 15px rgba(46,204,113,0.6)}
+#result-pop.lose{color:#e74c3c;text-shadow:0 0 15px rgba(231,76,60,0.6)}
+#result-pop.tie{color:var(--gold)}
+
+/* Energy dots */
+.char-egy{position:absolute;bottom:-50px;left:50%;transform:translateX(-50%);display:flex;gap:2px;z-index:4}
+.char-egy .edot{width:5px;height:5px;border-radius:50%;background:#333;transition:all 0.3s}
+.char-egy .edot.on{background:#f39c12;box-shadow:0 0 3px #f39c12}
+
+/* ===== CARDS ===== */
+#card-area{background:var(--surf);padding:6px;border-top:1px solid rgba(255,255,255,0.06);z-index:5}
+#card-tabs{display:flex;gap:3px;justify-content:center;margin-bottom:4px}
+#card-tabs .ctab{padding:3px 8px;border-radius:5px;border:1px solid rgba(255,255,255,0.08);background:transparent;color:var(--dim);font-size:0.6em;cursor:pointer;font-family:inherit}
+#card-tabs .ctab.on{background:rgba(201,169,110,0.12);border-color:var(--gold);color:var(--gold)}
+#card-tabs .ctab.p2tab.on{background:rgba(241,196,15,0.12);border-color:var(--p2);color:var(--p2)}
+#card-tabs .ctab.p3tab.on{background:rgba(224,86,160,0.12);border-color:var(--p3);color:var(--p3)}
+#cards-row{display:flex;gap:4px;justify-content:center;flex-wrap:wrap}
+.card{width:62px;padding:6px 3px;border-radius:8px;border:2px solid rgba(255,255,255,0.08);background:rgba(20,20,40,0.9);color:var(--txt);cursor:pointer;font-size:0.62em;font-weight:bold;font-family:inherit;transition:all 0.12s;text-align:center;display:flex;flex-direction:column;align-items:center;gap:1px}
+.card:active:not(:disabled){transform:scale(0.92)}
+.card:disabled{opacity:0.28;cursor:not-allowed;filter:grayscale(0.5)}
+.card .cicon{font-size:1.4em;line-height:1}
+.card .cname{font-size:0.85em}
+.card .ccost{font-size:0.62em;opacity:0.7}
+.card .ccharge{font-size:0.58em;color:#f39c12;font-weight:bold}
+.card.charge{border-color:rgba(46,204,113,0.4)}.card.charge:not(:disabled):hover{background:rgba(46,204,113,0.1)}
+.card.shield{border-color:rgba(52,152,219,0.4)}.card.shield:not(:disabled):hover{background:rgba(52,152,219,0.1)}
+.card.flyshield{border-color:rgba(100,220,200,0.4)}.card.flyshield:not(:disabled):hover{background:rgba(100,220,200,0.1)}
+.card.attack{border-color:rgba(231,76,60,0.25)}.card.attack:not(:disabled):hover{background:rgba(231,76,60,0.08)}
+.card.p2card:not(:disabled){border-color:rgba(241,196,15,0.4);box-shadow:0 0 5px rgba(241,196,15,0.08)}
+.card.p3card:not(:disabled){border-color:rgba(224,86,160,0.4);box-shadow:0 0 5px rgba(224,86,160,0.08)}
+
+/* Overlay / Setup / Rules */
+#overlay{position:fixed;inset:0;background:rgba(0,0,0,0.82);display:flex;justify-content:center;align-items:center;z-index:100;backdrop-filter:blur(4px)}
+#overlay.hidden{display:none}
+#overlay-box{background:var(--surf);border-radius:16px;border:2px solid var(--gold);padding:22px 16px;text-align:center;max-width:350px;width:90%;max-height:82vh;overflow-y:auto;animation:popIn 0.35s ease-out}
 @keyframes popIn{0%{transform:scale(0.5);opacity:0}100%{transform:scale(1);opacity:1}}
-#overlay-box h2{font-size:1.4em;color:var(--gol2);margin-bottom:4px;}
-#overlay-box .phase-result{font-size:0.7em;color:var(--dim);margin-bottom:4px;}
-#overlay-box .winner-text{font-size:0.85em;color:var(--txt);margin-bottom:14px;line-height:1.4;white-space:pre-line;}
-#overlay-box button{padding:10px 20px;font-size:0.9em;font-weight:bold;border:none;border-radius:20px;cursor:pointer;font-family:inherit;margin:3px 5px;}
-#overlay-box .btn-primary{background:linear-gradient(135deg,var(--gold),#a08040);color:#1a1a14;}
-#overlay-box .btn-secondary{background:transparent;border:1px solid var(--gold);color:var(--gold);}
+#overlay-box h2{font-size:1.3em;color:var(--gol2);margin-bottom:3px}
+#overlay-box .phase-result{font-size:0.68em;color:var(--dim);margin-bottom:3px}
+#overlay-box .winner-text{font-size:0.8em;color:var(--txt);margin-bottom:12px;line-height:1.4;white-space:pre-line}
+#overlay-box button{padding:9px 18px;font-size:0.85em;font-weight:bold;border:none;border-radius:18px;cursor:pointer;font-family:inherit;margin:3px 4px}
+#overlay-box .btn-primary{background:linear-gradient(135deg,var(--gold),#a08040);color:#1a1a14}
+#overlay-box .btn-secondary{background:transparent;border:1px solid var(--gold);color:var(--gold)}
+#setup{position:fixed;inset:0;background:var(--bg);display:flex;justify-content:center;align-items:center;z-index:300;flex-direction:column;gap:16px}
+#setup.hidden{display:none}
+#setup h1{font-size:2.5em;background:linear-gradient(180deg,var(--gol2),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+#setup .win-options{display:flex;gap:6px}
+#setup .win-opt{padding:10px 16px;border-radius:10px;border:2px solid rgba(255,255,255,0.1);background:var(--surf);color:var(--txt);cursor:pointer;font-size:0.95em;font-weight:bold;font-family:inherit}
+#setup .win-opt.sel{border-color:var(--gold);background:rgba(201,169,110,0.1);color:var(--gol2)}
+#setup .start-btn{padding:10px 32px;border-radius:18px;border:none;background:linear-gradient(135deg,var(--gold),#a08040);color:#1a1a14;font-size:1em;font-weight:bold;cursor:pointer;font-family:inherit}
+#rules-btn{position:fixed;top:6px;right:6px;width:26px;height:26px;border-radius:50%;border:1px solid rgba(255,255,255,0.12);background:var(--surf);color:var(--dim);font-size:0.75em;cursor:pointer;z-index:50;display:flex;align-items:center;justify-content:center}
+#rules-modal{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:flex;justify-content:center;align-items:center;z-index:200;backdrop-filter:blur(4px)}
+#rules-modal.hidden{display:none}
+#rules-box{background:var(--surf);border-radius:12px;border:1px solid rgba(201,169,110,0.3);padding:14px;max-width:380px;width:92%;max-height:78vh;overflow-y:auto;font-size:0.68em}
+#rules-box h3{color:var(--gold);text-align:center;margin-bottom:5px}
+#rules-box .rule-group{margin-bottom:4px;color:var(--dim);line-height:1.35}
+#rules-box .rule-group h4{color:var(--gol2);font-size:0.9em}
+#rules-box .close-btn{display:block;margin:8px auto 0;padding:5px 16px;border-radius:12px;border:1px solid var(--gold);background:transparent;color:var(--gold);cursor:pointer;font-family:inherit}
 
-/* ── Setup ── */
-#setup{position:fixed;inset:0;background:var(--bg);display:flex;justify-content:center;align-items:center;z-index:300;flex-direction:column;gap:18px;}
-#setup.hidden{display:none;}
-#setup h1{font-size:2.5em;background:linear-gradient(180deg,var(--gol2),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-#setup .win-options{display:flex;gap:8px;}
-#setup .win-opt{padding:12px 20px;border-radius:12px;border:2px solid rgba(255,255,255,0.12);background:var(--surf);color:var(--txt);cursor:pointer;font-size:1em;font-weight:bold;font-family:inherit;}
-#setup .win-opt.sel{border-color:var(--gold);background:rgba(201,169,110,0.12);color:var(--gol2);}
-#setup .start-btn{padding:11px 36px;border-radius:20px;border:none;background:linear-gradient(135deg,var(--gold),#a08040);color:#1a1a14;font-size:1.05em;font-weight:bold;cursor:pointer;font-family:inherit;margin-top:4px;}
-
-/* ── Rules ── */
-#rules-btn{position:fixed;top:8px;right:8px;width:28px;height:28px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:var(--surf);color:var(--dim);font-size:0.8em;cursor:pointer;z-index:50;}
-#rules-modal{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:flex;justify-content:center;align-items:center;z-index:200;backdrop-filter:blur(4px);}
-#rules-modal.hidden{display:none;}
-#rules-box{background:var(--surf);border-radius:14px;border:1px solid rgba(201,169,110,0.3);padding:16px;max-width:400px;width:92%;max-height:80vh;overflow-y:auto;font-size:0.72em;}
-#rules-box h3{color:var(--gold);text-align:center;margin-bottom:6px;}
-#rules-box .rule-group{margin-bottom:5px;color:var(--dim);line-height:1.4;}
-#rules-box .rule-group h4{color:var(--gol2);font-size:0.95em;}
-#rules-box .close-btn{display:block;margin:10px auto 0;padding:6px 18px;border-radius:14px;border:1px solid var(--gold);background:transparent;color:var(--gold);cursor:pointer;font-family:inherit;}
-
-/* Replay */
-.replay-phase{margin:8px 0;padding:8px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);}
-.replay-phase h4{color:var(--gold);font-size:0.85em;}
-.replay-round{font-size:0.7em;color:var(--dim);padding:2px 0;}
-.replay-round .r-win{color:#2ecc71;}.replay-round .r-lose{color:var(--dan);}
-.replay-final{text-align:center;font-size:0.9em;color:var(--gol2);font-weight:bold;margin:6px 0;}
+.replay-phase{margin:6px 0;padding:6px;border-radius:7px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05)}
+.replay-phase h4{color:var(--gold);font-size:0.8em}
+.replay-round{font-size:0.65em;color:var(--dim);padding:1px 0}.replay-round .r-win{color:#2ecc71}.replay-round .r-lose{color:var(--dan)}
+.replay-final{text-align:center;font-size:0.85em;color:var(--gol2);font-weight:bold;margin:5px 0}
 </style>
 </head>
 <body>
 
 <div id="setup">
-  <h1>苍 心</h1>
-  <div style="color:var(--dim)">气 功 对 决</div>
-  <div style="color:var(--dim);margin-top:6px;">选择每阶段获胜局数</div>
+  <h1>苍 心</h1><div style="color:var(--dim)">气 功 对 决</div>
+  <div style="color:var(--dim);margin-top:4px">选择每阶段获胜局数</div>
   <div class="win-options" id="win-options">
-    <button class="win-opt" data-wins="1">1 局定胜负</button>
-    <button class="win-opt sel" data-wins="3">3 局制</button>
-    <button class="win-opt" data-wins="2">2 局制</button>
+    <button class="win-opt" data-wins="1">1局制</button>
+    <button class="win-opt sel" data-wins="3">3局制</button>
+    <button class="win-opt" data-wins="2">2局制</button>
   </div>
   <button class="start-btn" id="start-game-btn">开始对决</button>
 </div>
@@ -211,36 +246,48 @@ body{
   <div id="topbar">
     <h1>苍 心</h1>
     <div id="phase-tag" class="p1">⚔ 第一阶段</div>
-    <div id="score-display"><span class="sc" id="pscore">0</span><span class="vs">:</span><span class="sc" id="cscore">0</span></div>
+    <div id="scoredisp"><span class="sc" id="pscore">0</span><span class="vs">:</span><span class="sc" id="cscore">0</span></div>
   </div>
   <div id="round-info"></div>
 
   <div id="arena">
     <div id="ground"></div>
-    <!-- Player character -->
+    <div class="flash-overlay" id="flash-fx"></div>
+
+    <!-- Player -->
     <div class="char" id="player-char">
-      <div class="char-glow" id="player-glow"></div>
-      <div class="char-head"><div class="char-mouth"></div></div>
-      <div class="char-body"><div class="char-belt"></div></div>
-      <div class="char-arm-l"></div><div class="char-arm-r"></div>
-      <div class="char-leg-l"></div><div class="char-leg-r"></div>
-      <div class="char-energy" id="player-egy"></div>
+      <div class="aura" id="player-aura"></div>
+      <div class="char-hair"></div>
+      <div class="char-head">
+        <div class="char-eyes"><span class="char-eye"></span><span class="char-eye"></span></div>
+      </div>
+      <div class="char-torso"><div class="char-belt"></div></div>
+      <div class="char-arm arm-back"></div><div class="char-arm arm-front"></div>
+      <div class="char-fist fist-back"></div><div class="char-fist fist-front"></div>
+      <div class="char-leg leg-front"><div class="char-foot"></div></div>
+      <div class="char-leg leg-back"><div class="char-foot"></div></div>
+      <div class="char-egy" id="player-egy"></div>
     </div>
-    <!-- Enemy character -->
+
+    <!-- Enemy -->
     <div class="char" id="enemy-char">
-      <div class="char-glow" id="enemy-glow"></div>
-      <div class="char-head"><div class="char-mouth"></div></div>
-      <div class="char-body"><div class="char-belt"></div></div>
-      <div class="char-arm-l"></div><div class="char-arm-r"></div>
-      <div class="char-leg-l"></div><div class="char-leg-r"></div>
-      <div class="char-energy" id="enemy-egy"></div>
+      <div class="aura" id="enemy-aura"></div>
+      <div class="char-hair"></div>
+      <div class="char-head">
+        <div class="char-eyes"><span class="char-eye"></span><span class="char-eye"></span></div>
+      </div>
+      <div class="char-torso"><div class="char-belt"></div></div>
+      <div class="char-arm arm-back"></div><div class="char-arm arm-front"></div>
+      <div class="char-fist fist-back"></div><div class="char-fist fist-front"></div>
+      <div class="char-leg leg-front"><div class="char-foot"></div></div>
+      <div class="char-leg leg-back"><div class="char-foot"></div></div>
+      <div class="char-egy" id="enemy-egy"></div>
     </div>
+
     <!-- Shield barriers -->
-    <div class="shield-barrier" id="player-shield" style="left:15%;bottom:50px;"></div>
-    <div class="shield-barrier" id="enemy-shield" style="right:15%;bottom:50px;"></div>
-    <!-- Impact -->
-    <div class="impact" id="impact-fx"></div>
-    <!-- Result pop -->
+    <div class="shield-fx" id="player-shield" style="left:8%;bottom:18%;"><div class="shield-fx-inner"></div></div>
+    <div class="shield-fx" id="enemy-shield" style="right:8%;bottom:18%;"><div class="shield-fx-inner"></div></div>
+
     <div id="result-pop"></div>
   </div>
 
@@ -252,30 +299,26 @@ body{
 
 <div id="overlay" class="hidden"><div id="overlay-box"></div></div>
 <button id="rules-btn">?</button>
-<div id="rules-modal" class="hidden">
-  <div id="rules-box">
-    <h3>📜 游戏规则</h3>
-    <div class="rule-group"><h4>⚔ 第一阶段</h4>双方各6招，先赢N局胜出。</div>
-    <div class="rule-group"><h4>☯ 苍心(免费)</h4>+1能，被攻击即败。</div>
-    <div class="rule-group"><h4>🛡 护盾(免费)</h4>挡波波/天马/冰雕/朝翅；挡六电(-1能)；挡不住搓搓/八嘎以上。</div>
-    <div class="rule-group"><h4>💨波波(-1)＜⚡六电(-2)＜🔥搓搓(-3)＜💀八嘎(-4)</h4></div>
-    <div class="rule-group"><h4>🌟 P2技能（P1赢家）</h4>🦄天马(-1) 威力=六电,护盾不扣能。🌟天马流星转转拳(-3) 威力=八嘎。</div>
-    <div class="rule-group"><h4>💥 P3技能（P2赢家）</h4>❄冰雕(1能3次)＜💨波波。🦅朝翅(-1) 威力=搓搓,护盾不扣能。❄🦅冰雕朝翅(-2) 威力=八嘎。💥冰雕朝翅飞(-3) 威力>八嘎。🕊飞飞(免费) 仅六电能击落。</div>
-    <button class="close-btn" id="rules-close">知道了</button>
-  </div>
-</div>
+<div id="rules-modal" class="hidden"><div id="rules-box">
+  <h3>📜 规则</h3>
+  <div class="rule-group"><h4>⚔ 第一阶段</h4>各6招，先赢N局胜出。</div>
+  <div class="rule-group"><h4>☯苍心(免费)</h4>+1能，被攻击即败。</div>
+  <div class="rule-group"><h4>🛡护盾(免费)</h4>挡波波/天马/冰雕/朝翅。六电(-1能)。挡不住搓搓/八嘎以上。</div>
+  <div class="rule-group"><h4>💨波波＜⚡六电＜🔥搓搓＜💀八嘎</h4></div>
+  <div class="rule-group"><h4>🌟P2（P1赢家）</h4>🦄天马(-1)威力=六电,护盾不扣能。🌟天马流星转转拳(-3)威力=八嘎。</div>
+  <div class="rule-group"><h4>💥P3（P2赢家）</h4>❄冰雕(1能3次)＜波波。🦅朝翅(-1)威力=搓搓,护盾不扣能。❄🦅冰雕朝翅(-2)威力=八嘎。💥冰雕朝翅飞(-3)威力>八嘎。🕊飞飞(免费)仅六电能击落。</div>
+  <button class="close-btn" id="rules-close">知道了</button>
+</div></div>
 
 <script>
 (function(){
-const $=s=>document.querySelector(s);
-const $$=s=>document.querySelectorAll(s);
+const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
 
-// ── Moves ──
 const BASE_MOVES={
   '苍心':{type:'charge',cost:0,power:0,icon:'☯',anim:'charge',desc:'+1能,被攻击即败'},
   '护盾':{type:'shield',cost:0,power:0,icon:'🛡',anim:'shield',desc:'防御'},
-  '波波':{type:'attack',cost:1,power:1,icon:'💨',anim:'wave',shieldResult:'blocked',desc:'基础冲击波'},
-  '六电':{type:'attack',cost:2,power:2,icon:'⚡',anim:'bolt',shieldResult:'energyLoss',desc:'闪电击穿护盾'},
+  '波波':{type:'attack',cost:1,power:1,icon:'💨',anim:'wave',shieldResult:'blocked',desc:'冲击波'},
+  '六电':{type:'attack',cost:2,power:2,icon:'⚡',anim:'bolt',shieldResult:'energyLoss',desc:'闪电'},
   '搓搓':{type:'attack',cost:3,power:3,icon:'🔥',anim:'fire',shieldResult:'pierce',desc:'火焰摩擦'},
   '八嘎':{type:'attack',cost:4,power:4,icon:'💀',anim:'dark',shieldResult:'pierce',desc:'暗黑重击'},
 };
@@ -284,496 +327,256 @@ const PHASE2_BONUS={
   '天马流星转转拳':{type:'attack',cost:3,power:4,icon:'🌟',anim:'meteor',shieldResult:'pierce',bonus:true,phase:2,desc:'流星旋转拳'},
 };
 const PHASE3_BONUS={
-  '冰雕':{type:'attack',cost:0,power:0,icon:'❄',anim:'ice',shieldResult:'blocked',bonus:true,phase:3,desc:'1能3次,冰晶',chargeCost:1,chargesPerPay:3},
+  '冰雕':{type:'attack',cost:0,power:0,icon:'❄',anim:'ice',shieldResult:'blocked',bonus:true,phase:3,desc:'1能3次',chargeCost:1,chargesPerPay:3},
   '朝翅':{type:'attack',cost:1,power:3,icon:'🦅',anim:'wing',shieldResult:'blocked',bonus:true,phase:3,desc:'翅斩,护盾不扣能'},
   '冰雕朝翅':{type:'attack',cost:2,power:4,icon:'❄🦅',anim:'icewing',shieldResult:'pierce',bonus:true,phase:3,desc:'冰翅合击'},
-  '冰雕朝翅飞':{type:'attack',cost:3,power:5,icon:'💥',anim:'ult',shieldResult:'pierce',bonus:true,phase:3,desc:'终极冰翅飞天'},
-  '飞飞':{type:'flyshield',cost:0,power:0,icon:'🕊',anim:'fly',bonus:true,phase:3,desc:'飞舞闪避,仅六电能击落'},
+  '冰雕朝翅飞':{type:'attack',cost:3,power:5,icon:'💥',anim:'ult',shieldResult:'pierce',bonus:true,phase:3,desc:'终极爆发'},
+  '飞飞':{type:'flyshield',cost:0,power:0,icon:'🕊',anim:'fly',bonus:true,phase:3,desc:'闪避,仅六电能击落'},
 };
 
-// ── State ──
 let winsPerPhase=3,selectedWins=3;
-let state={
-  currentPhase:1,phase1Winner:null,phase2Winner:null,
-  phase1PlayerScore:0,phase1ComputerScore:0,phase2PlayerScore:0,phase2ComputerScore:0,
-  playerEnergy:0,computerEnergy:0,playerScore:0,computerScore:0,
-  currentRound:1,turnInRound:0,gameOver:false,awaitingPlayer:true,
-  playerMove:null,computerMove:null,lastResult:null,
-  playerBingdiaoCharges:0,computerBingdiaoCharges:0,
-};
-let playerHistory=[],aiMood=0.5;
-let gameHistory={winsPerPhase:3,phases:[]},currentPhaseHistory=null;
+let state={currentPhase:1,phase1Winner:null,phase2Winner:null,phase1PlayerScore:0,phase1ComputerScore:0,phase2PlayerScore:0,phase2ComputerScore:0,playerEnergy:0,computerEnergy:0,playerScore:0,computerScore:0,currentRound:1,turnInRound:0,gameOver:false,awaitingPlayer:true,playerMove:null,computerMove:null,lastResult:null,playerBingdiaoCharges:0,computerBingdiaoCharges:0};
+let playerHistory=[],aiMood=0.5,gameHistory={winsPerPhase:3,phases:[]},currentPhaseHistory=null;
 let activeTab='base',movesNeedRebuild=true;
 
-function getPlayerMoves(){
-  let m={...BASE_MOVES};
-  if(state.currentPhase>=2&&state.phase1Winner==='player')Object.assign(m,PHASE2_BONUS);
-  if(state.currentPhase>=3&&state.phase2Winner==='player')Object.assign(m,PHASE3_BONUS);
-  return m;
-}
-function getComputerMoves(){
-  let m={...BASE_MOVES};
-  if(state.currentPhase>=2&&state.phase1Winner==='computer')Object.assign(m,PHASE2_BONUS);
-  if(state.currentPhase>=3&&state.phase2Winner==='computer')Object.assign(m,PHASE3_BONUS);
-  return m;
-}
-function getAttacks(ms){return Object.entries(ms).filter(([_,i])=>i.type==='attack').map(([n])=>n);}
+function getPlayerMoves(){let m={...BASE_MOVES};if(state.currentPhase>=2&&state.phase1Winner==='player')Object.assign(m,PHASE2_BONUS);if(state.currentPhase>=3&&state.phase2Winner==='player')Object.assign(m,PHASE3_BONUS);return m}
+function getComputerMoves(){let m={...BASE_MOVES};if(state.currentPhase>=2&&state.phase1Winner==='computer')Object.assign(m,PHASE2_BONUS);if(state.currentPhase>=3&&state.phase2Winner==='computer')Object.assign(m,PHASE3_BONUS);return m}
+function getAttacks(ms){return Object.entries(ms).filter(([_,i])=>i.type==='attack').map(([n])=>n)}
 
 // ── Resolution ──
 function resolveTurn(pMove,cMove){
   const pM=getPlayerMoves(),cM=getComputerMoves();
   const r={playerEnergyDelta:0,computerEnergyDelta:0,playerDefeated:false,computerDefeated:false,description:''};
-  const pI=pM[pMove],cI=cM[cMove];
-  const pAtk=pI.type==='attack',cAtk=cI.type==='attack';
-  const pCx=pMove==='苍心',cCx=cMove==='苍心',pSh=pMove==='护盾',cSh=cMove==='护盾';
-  const pFf=pI.type==='flyshield',cFf=cI.type==='flyshield';
-
-  if(pCx)r.playerEnergyDelta+=1; if(cCx)r.computerEnergyDelta+=1;
-  if(pCx&&cAtk){r.playerDefeated=true;r.computerEnergyDelta-=cI.cost;r.description='苍心被'+cMove+'击败！';return r;}
-  if(cCx&&pAtk){r.computerDefeated=true;r.playerEnergyDelta-=pI.cost;r.description='你'+pMove+'击败对手苍心！';return r;}
-  if(pCx&&cCx){r.description='双方同时蓄力！';return r;}
-
-  // 飞飞
-  if(pFf){
-    if(cMove==='六电'){r.playerDefeated=true;r.computerEnergyDelta-=cI.cost;r.description='飞飞被六电击落！';return r;}
-    if(cAtk){r.computerEnergyDelta-=cI.cost;r.description='飞飞闪避了'+cMove+'！';return r;}
-    if(cCx){r.description='对手蓄力，飞飞飘舞中';return r;}
-    if(cFf){r.description='双方飞舞对峙';return r;}
-    if(cSh){r.description='双方防御中';return r;}
-  }
-  if(cFf){
-    if(pMove==='六电'){r.computerDefeated=true;r.playerEnergyDelta-=pI.cost;r.description='六电击落对手飞飞！';return r;}
-    if(pAtk){r.playerEnergyDelta-=pI.cost;r.description='对手飞飞闪避了'+pMove+'！';return r;}
-    if(pCx){r.description='你蓄力，对手飞飞飘舞中';return r;}
-    if(pSh){r.description='双方防御中';return r;}
-  }
-
-  function shieldRes(isPlayer){
-    const attKey=isPlayer?'computerEnergyDelta':'playerEnergyDelta';
-    const defKey=isPlayer?'playerEnergyDelta':'computerEnergyDelta';
-    const defK2=isPlayer?'playerDefeated':'computerDefeated';
-    const atkInfo=isPlayer?cI:pI,atkName=isPlayer?cMove:pMove;
-    const dl=isPlayer?'你':'对手';
-    const o={playerEnergyDelta:0,computerEnergyDelta:0,playerDefeated:false,computerDefeated:false,description:''};
-    o[attKey]-=atkInfo.cost;
-    if(atkInfo.shieldResult==='blocked')o.description=dl+'的护盾挡住了'+atkName+'！';
-    else if(atkInfo.shieldResult==='energyLoss'){o[defKey]-=1;o.description=dl+'的护盾被'+atkName+'击穿！-1能';}
-    else{o[defK2]=true;o.description=dl+'的护盾挡不住'+atkName+'！';}
-    return o;
-  }
-  if(pSh&&cAtk){Object.assign(r,shieldRes(true));return r;}
-  if(cSh&&pAtk){Object.assign(r,shieldRes(false));return r;}
-  if(pSh&&cCx){r.description='对手蓄力，你举盾防御';return r;}
-  if(cSh&&pCx){r.description='你蓄力，对手举盾防御';return r;}
-  if(pSh&&cSh){r.description='双方举盾，相安无事';return r;}
-
-  if(pAtk&&cAtk){
-    r.playerEnergyDelta-=pI.cost;r.computerEnergyDelta-=cI.cost;
-    if(pI.power>cI.power){r.computerDefeated=true;r.description=pMove+'击败'+cMove+'！';}
-    else if(cI.power>pI.power){r.playerDefeated=true;r.description=cMove+'击败'+pMove+'！';}
-    else{r.description=pMove+'对'+cMove+'，平手！';}
-    return r;
-  }
-  r.description='双方对峙...';return r;
+  const pI=pM[pMove],cI=cM[cMove],pAtk=pI.type==='attack',cAtk=cI.type==='attack';
+  const pCx=pMove==='苍心',cCx=cMove==='苍心',pSh=pMove==='护盾',cSh=cMove==='护盾',pFf=pI.type==='flyshield',cFf=cI.type==='flyshield';
+  if(pCx)r.playerEnergyDelta+=1;if(cCx)r.computerEnergyDelta+=1;
+  if(pCx&&cAtk){r.playerDefeated=true;r.computerEnergyDelta-=cI.cost;r.description='苍心被'+cMove+'击败！';return r}
+  if(cCx&&pAtk){r.computerDefeated=true;r.playerEnergyDelta-=pI.cost;r.description=pMove+'击败对手苍心！';return r}
+  if(pCx&&cCx){r.description='双方同时蓄力！';return r}
+  if(pFf){if(cMove==='六电'){r.playerDefeated=true;r.computerEnergyDelta-=cI.cost;r.description='飞飞被六电击落！';return r}if(cAtk){r.computerEnergyDelta-=cI.cost;r.description='飞飞闪避'+cMove;return r}if(cCx){r.description='对手蓄力，飞飞飘舞';return r}if(cFf){r.description='双方飞舞';return r}if(cSh){r.description='双方防御';return r}}
+  if(cFf){if(pMove==='六电'){r.computerDefeated=true;r.playerEnergyDelta-=pI.cost;r.description='六电击落飞飞！';return r}if(pAtk){r.playerEnergyDelta-=pI.cost;r.description='飞飞闪避'+pMove;return r}if(pCx){r.description='你蓄力，对手飞飞';return r}if(pSh){r.description='双方防御';return r}}
+  function sRes(isP){const ak=isP?'computerEnergyDelta':'playerEnergyDelta',dk=isP?'playerEnergyDelta':'computerEnergyDelta',dk2=isP?'playerDefeated':'computerDefeated',ai=isP?cI:pI,an=isP?cMove:pMove,dl=isP?'你':'对手';const o={playerEnergyDelta:0,computerEnergyDelta:0,playerDefeated:false,computerDefeated:false,description:''};o[ak]-=ai.cost;if(ai.shieldResult==='blocked')o.description=dl+'的护盾挡住'+an;else if(ai.shieldResult==='energyLoss'){o[dk]-=1;o.description=dl+'护盾被'+an+'击穿-1能'}else{o[dk2]=true;o.description=dl+'护盾挡不住'+an}return o}
+  if(pSh&&cAtk){Object.assign(r,sRes(true));return r}if(cSh&&pAtk){Object.assign(r,sRes(false));return r}
+  if(pSh&&cCx){r.description='对手蓄力，你举盾';return r}if(cSh&&pCx){r.description='你蓄力，对手举盾';return r}if(pSh&&cSh){r.description='双方举盾';return r}
+  if(pAtk&&cAtk){r.playerEnergyDelta-=pI.cost;r.computerEnergyDelta-=cI.cost;if(pI.power>cI.power){r.computerDefeated=true;r.description=pMove+'击败'+cMove+'！'}else if(cI.power>pI.power){r.playerDefeated=true;r.description=cMove+'击败'+pMove+'！'}else{r.description=pMove+'对'+cMove+',平手'}return r}
+  r.description='对峙...';return r;
 }
 
 // ── AI ──
-function getAvailableAI(ms,egy,charges){
-  return Object.entries(ms).filter(([n,i])=>{
-    if(i.chargeCost)return charges>0||egy>=i.chargeCost;
-    return !(i.type==='attack'&&egy<i.cost);
-  }).map(([n])=>n);
-}
+function getAvailAI(ms,egy,ch){return Object.entries(ms).filter(([n,i])=>{if(i.chargeCost)return ch>0||egy>=i.chargeCost;return!(i.type==='attack'&&egy<i.cost)}).map(([n])=>n)}
 function aiChoose(pE,cE){
-  const cM=getComputerMoves(),pM=getPlayerMoves();
-  const cAtt=getAttacks(cM),avail=getAvailableAI(cM,cE,state.computerBingdiaoCharges);
-  const w={};for(const m of avail)w[m]=1;
+  const cM=getComputerMoves(),pM=getPlayerMoves(),cAtt=getAttacks(cM),avail=getAvailAI(cM,cE,state.computerBingdiaoCharges),w={};for(const m of avail)w[m]=1;
   if(cE===0&&pE===0&&avail.includes('苍心'))w['苍心']+=1000;
   if(cE<=1&&avail.includes('苍心'))w['苍心']+=5;
-  if(pE<=1&&cE>=1){for(const a of cAtt)if(avail.includes(a)&&cE>=cM[a].cost)w[a]+=3;}
+  if(pE<=1&&cE>=1)for(const a of cAtt)if(avail.includes(a)&&cE>=cM[a].cost)w[a]+=3;
   for(const a of cAtt)if(cM[a].power>=4&&cE>=cM[a].cost&&avail.includes(a))w[a]+=5;
-  if(pE>=3&&getAvailableAI(pM,pE,state.playerBingdiaoCharges).some(m=>pM[m].type==='attack')){
-    if(avail.includes('护盾'))w['护盾']+=2; if(avail.includes('飞飞'))w['飞飞']+=3;
-  }
+  if(pE>=3&&getAvailAI(pM,pE,state.playerBingdiaoCharges).some(m=>pM[m].type==='attack')){if(avail.includes('护盾'))w['护盾']+=2;if(avail.includes('飞飞'))w['飞飞']+=3}
   if(cE>=2&&cE<4)for(const a of cAtt)if(cM[a].power===2&&avail.includes(a))w[a]+=2;
-  if(avail.includes('天马')&&cE>=1)w['天马']+=2;
-  if(avail.includes('天马流星转转拳')&&cE>=3)w['天马流星转转拳']+=4;
-  if(avail.includes('冰雕朝翅飞')&&cE>=3)w['冰雕朝翅飞']+=5;
-  if(avail.includes('冰雕朝翅')&&cE>=2)w['冰雕朝翅']+=3;
-  if(avail.includes('冰雕')){if(state.computerBingdiaoCharges>0)w['冰雕']+=3;else if(cE>=1)w['冰雕']+=1;}
-  for(const m of avail){w[m]=(w[m]||1)+(Math.random()-0.5)*3;if(w[m]<0.1)w[m]=0.1;}
+  if(avail.includes('天马')&&cE>=1)w['天马']+=2;if(avail.includes('天马流星转转拳')&&cE>=3)w['天马流星转转拳']+=4;
+  if(avail.includes('冰雕朝翅飞')&&cE>=3)w['冰雕朝翅飞']+=5;if(avail.includes('冰雕朝翅')&&cE>=2)w['冰雕朝翅']+=3;
+  if(avail.includes('冰雕')){if(state.computerBingdiaoCharges>0)w['冰雕']+=3;else if(cE>=1)w['冰雕']+=1}
+  for(const m of avail){w[m]=(w[m]||1)+(Math.random()-0.5)*3;if(w[m]<0.1)w[m]=0.1}
   const total=avail.reduce((s,m)=>s+w[m],0);let rand=Math.random()*total;
-  for(const m of avail){rand-=w[m];if(rand<=0)return m;}
-  return avail[avail.length-1];
+  for(const m of avail){rand-=w[m];if(rand<=0)return m}return avail[avail.length-1];
 }
 
-// ── DOM refs ──
+// ── DOM ──
 const dom={
   setup:$('#setup'),phaseTag:$('#phase-tag'),pscore:$('#pscore'),cscore:$('#cscore'),
-  roundInfo:$('#round-info'),playerChar:$('#player-char'),enemyChar:$('#enemy-char'),
-  playerGlow:$('#player-glow'),enemyGlow:$('#enemy-glow'),
+  roundInfo:$('#round-info'),arena:$('#arena'),
+  playerChar:$('#player-char'),enemyChar:$('#enemy-char'),
+  playerAura:$('#player-aura'),enemyAura:$('#enemy-aura'),
   playerEgy:$('#player-egy'),enemyEgy:$('#enemy-egy'),
   playerShield:$('#player-shield'),enemyShield:$('#enemy-shield'),
-  impactFx:$('#impact-fx'),resultPop:$('#result-pop'),
+  flashFx:$('#flash-fx'),resultPop:$('#result-pop'),
   cardTabs:$('#card-tabs'),cardsRow:$('#cards-row'),
   overlay:$('#overlay'),overlayBox:$('#overlay-box'),
 };
 
-// ── Animation Engine ──
-function clearAnims(){
+// ── FX Engine ──
+function clearAllFx(){
   dom.playerChar.className='char';dom.enemyChar.className='char';
-  dom.playerGlow.classList.remove('active');dom.enemyGlow.classList.remove('active');
+  dom.playerAura.className='aura';dom.enemyAura.className='aura';
+  dom.playerAura.style.setProperty('--ac','rgba(52,152,219,0.5)');dom.enemyAura.style.setProperty('--ac','rgba(231,76,60,0.5)');
   dom.playerShield.classList.remove('on');dom.enemyShield.classList.remove('on');
-  dom.impactFx.classList.remove('show');dom.resultPop.classList.remove('show','win','lose','tie');
-  // Remove projectiles
-  dom.playerChar.parentElement.querySelectorAll('.proj').forEach(e=>e.remove());
+  dom.flashFx.className='flash-overlay';dom.resultPop.className='';
+  dom.arena.classList.remove('shake','shake-heavy');
+  dom.arena.querySelectorAll('.proj,.impact-burst,.impact-spark,.shield-break,.particle').forEach(e=>e.remove());
 }
 
-function playAnim(playerMove,computerMove,result){
-  clearAnims();
-  const pM=getPlayerMoves(),cM=getComputerMoves();
-  const pI=pM[playerMove],cI=cM[computerMove];
+function shakeScreen(heavy){dom.arena.classList.add(heavy?'shake-heavy':'shake');setTimeout(()=>dom.arena.classList.remove('shake','shake-heavy'),heavy?600:500)}
+function flashScreen(color){dom.flashFx.className='flash-overlay '+color;setTimeout(()=>dom.flashFx.className='flash-overlay',color==='white'?80:150)}
 
-  // Helper: spawn projectile
-  function proj(from,to,emoji,cls=''){
-    const el=document.createElement('div');
-    el.className='proj '+cls;el.textContent=emoji;
-    const arena=dom.playerChar.parentElement;
-    const fRect=from.getBoundingClientRect(),aRect=arena.getBoundingClientRect();
-    el.style.left=(fRect.left+fRect.width/2-aRect.left-15)+'px';
-    el.style.top=(fRect.top+fRect.height/3-aRect.top-15)+'px';
-    arena.appendChild(el);
-    requestAnimationFrame(()=>{
-      const tRect=to.getBoundingClientRect();
-      el.classList.add('fly');
-      el.style.left=(tRect.left+tRect.width/2-aRect.left-15)+'px';
-      el.style.top=(tRect.top+tRect.height/3-aRect.top-15)+'px';
-    });
-    setTimeout(()=>el.remove(),600);
+function spawnParticle(charEl,color,n=8){
+  const arena=dom.arena,cr=charEl.getBoundingClientRect(),ar=arena.getBoundingClientRect();
+  for(let i=0;i<n;i++){
+    const p=document.createElement('div');p.className='particle';
+    p.style.left=(cr.left+cr.width/2-ar.left+(Math.random()-0.5)*30)+'px';
+    p.style.top=(cr.top+cr.height*0.4-ar.top)+'px';
+    p.style.width=(Math.random()*4+2)+'px';p.style.height=p.style.width;
+    p.style.borderRadius='50%';p.style.background=color;
+    p.style.boxShadow='0 0 '+((Math.random()*4+2))+'px '+color;
+    p.style.animationDuration=(Math.random()*0.4+0.5)+'s';
+    p.style.setProperty('--sx',((Math.random()-0.5)*40)+'px');
+    p.style.setProperty('--sy',(-Math.random()*40-10)+'px');
+    arena.appendChild(p);setTimeout(()=>p.remove(),900);
   }
+}
 
-  // Determine anim direction
-  const playerIsAttacker = !result.playerDefeated && (result.computerDefeated || pI.type==='attack');
-  const computerIsAttacker = !result.computerDefeated && (result.playerDefeated || cI.type==='attack');
+function spawnProjectile(from,to,emoji,cls){
+  const arena=dom.arena,fr=from.getBoundingClientRect(),tr=to.getBoundingClientRect(),ar=arena.getBoundingClientRect();
+  const el=document.createElement('div');el.className='proj proj-'+cls;el.textContent=emoji;
+  el.style.left=(fr.left+fr.width/2-ar.left-15)+'px';
+  el.style.top=(fr.top+fr.height*0.35-ar.top-15)+'px';
+  arena.appendChild(el);
+  requestAnimationFrame(()=>{
+    el.classList.add('flying');
+    el.style.left=(tr.left+tr.width/2-ar.left-15)+'px';
+    el.style.top=(tr.top+tr.height*0.35-ar.top-15)+'px';
+  });
+  setTimeout(()=>{el.classList.add('hit');setTimeout(()=>el.remove(),200)},430);
+  return el;
+}
 
-  // Character animations
+function spawnImpact(charEl,heavy){
+  const arena=dom.arena,cr=charEl.getBoundingClientRect(),ar=arena.getBoundingClientRect();
+  const cx=cr.left+cr.width/2-ar.left,cy=cr.top+cr.height/2-ar.top;
+  // Burst
+  const b=document.createElement('div');b.className='impact-burst';b.textContent=heavy?'💥':'✨';
+  b.style.left=(cx-18)+'px';b.style.top=(cy-18)+'px';
+  arena.appendChild(b);requestAnimationFrame(()=>b.classList.add('go'));setTimeout(()=>b.remove(),600);
+  // Sparks
+  for(let i=0;i<(heavy?10:5);i++){
+    const s=document.createElement('div');s.className='impact-spark';
+    s.style.left=cx+'px';s.style.top=cy+'px';
+    s.style.background=['#ff0','#f80','#fff','#f44','#4af'][Math.floor(Math.random()*5)];
+    s.style.boxShadow='0 0 4px '+s.style.background;
+    s.style.setProperty('--sx',((Math.random()-0.5)*60)+'px');
+    s.style.setProperty('--sy',((Math.random()-0.5)*50)+'px');
+    arena.appendChild(s);setTimeout(()=>s.remove(),700);
+  }
+}
+
+function playAnim(pMove,cMove,result){
+  clearAllFx();
+  const pM=getPlayerMoves(),cM=getComputerMoves(),pI=pM[pMove],cI=cM[cMove];
+  const pWin=result.computerDefeated,cWin=result.playerDefeated;
+
   setTimeout(()=>{
-    // Player anim
-    if(pI.type==='charge'){dom.playerChar.classList.add('charge');dom.playerGlow.classList.add('active');}
-    else if(pI.type==='shield'){dom.playerShield.classList.add('on');}
-    else if(pI.type==='flyshield'){dom.playerChar.classList.add('fly');}
-    else if(pI.type==='attack'&&playerIsAttacker){
-      dom.playerChar.classList.add('attack');
-      const projEmoji={'wave':'💨','bolt':'⚡','fire':'🔥','dark':'💀','pegasus':'🦄','meteor':'🌟','ice':'❄','wing':'🦅','icewing':'❄🦅','ult':'💥'};
-      const anim=pI.anim||'wave';
-      setTimeout(()=>proj(dom.playerChar,dom.enemyChar,projEmoji[anim]||'💥','proj-'+anim),150);
+    // ═══ PLAYER ANIM ═══
+    if(pI.type==='charge'){dom.playerChar.classList.add('charge-up');dom.playerAura.classList.add('fire');dom.playerAura.style.setProperty('--ac','rgba(46,204,113,0.6)');spawnParticle(dom.playerChar,'#2ecc71',10);setTimeout(()=>dom.playerAura.classList.remove('fire'),700)}
+    else if(pI.type==='shield'){dom.playerShield.classList.add('on');dom.playerChar.classList.add('block-stance')}
+    else if(pI.type==='flyshield'){dom.playerChar.classList.add('fly-up');spawnParticle(dom.playerChar,'#64dcc8',6)}
+    else if(pI.type==='attack'){
+      const a=pI.anim;const heavy=a==='dark'||a==='ult'||a==='meteor';
+      if(pWin||!result.playerDefeated){
+        if(a==='fire'||a==='dark')dom.playerChar.classList.add('punch');
+        else if(a==='pegasus'||a==='wing')dom.playerChar.classList.add('kick');
+        else if(a==='ult')dom.playerChar.classList.add('uppercut');
+        else dom.playerChar.classList.add('punch');
+        const emojiMap={wave:'💨',bolt:'⚡',fire:'🔥',dark:'💀',pegasus:'🦄',meteor:'🌟',ice:'❄',wing:'🦅',icewing:'❄🦅',ult:'💥'};
+        setTimeout(()=>spawnProjectile(dom.playerChar,dom.enemyChar,emojiMap[a]||'💥',a),180);
+      }
     }
 
-    // Enemy anim
-    if(cI.type==='charge'){dom.enemyChar.classList.add('charge');dom.enemyGlow.classList.add('active');}
-    else if(cI.type==='shield'){dom.enemyShield.classList.add('on');}
-    else if(cI.type==='flyshield'){dom.enemyChar.classList.add('fly');}
-    else if(cI.type==='attack'&&computerIsAttacker){
-      dom.enemyChar.classList.add('attack');
-      const projEmoji={'wave':'💨','bolt':'⚡','fire':'🔥','dark':'💀','pegasus':'🦄','meteor':'🌟','ice':'❄','wing':'🦅','icewing':'❄🦅','ult':'💥'};
-      const anim=cI.anim||'wave';
-      setTimeout(()=>proj(dom.enemyChar,dom.playerChar,projEmoji[anim]||'💥','proj-'+anim),150);
+    // ═══ ENEMY ANIM ═══
+    if(cI.type==='charge'){dom.enemyChar.classList.add('charge-up');dom.enemyAura.classList.add('fire');dom.enemyAura.style.setProperty('--ac','rgba(231,76,60,0.6)');spawnParticle(dom.enemyChar,'#e74c3c',10);setTimeout(()=>dom.enemyAura.classList.remove('fire'),700)}
+    else if(cI.type==='shield'){dom.enemyShield.classList.add('on');dom.enemyChar.classList.add('block-stance')}
+    else if(cI.type==='flyshield'){dom.enemyChar.classList.add('fly-up');spawnParticle(dom.enemyChar,'#64dcc8',6)}
+    else if(cI.type==='attack'){
+      const a=cI.anim;const heavy=a==='dark'||a==='ult'||a==='meteor';
+      if(cWin||!result.computerDefeated){
+        if(a==='fire'||a==='dark')dom.enemyChar.classList.add('punch');
+        else if(a==='pegasus'||a==='wing')dom.enemyChar.classList.add('kick');
+        else if(a==='ult')dom.enemyChar.classList.add('uppercut');
+        else dom.enemyChar.classList.add('punch');
+        const emojiMap={wave:'💨',bolt:'⚡',fire:'🔥',dark:'💀',pegasus:'🦄',meteor:'🌟',ice:'❄',wing:'🦅',icewing:'❄🦅',ult:'💥'};
+        setTimeout(()=>spawnProjectile(dom.enemyChar,dom.playerChar,emojiMap[a]||'💥',a),180);
+      }
     }
 
-    // Hit reactions
+    // ═══ RESULTS ═══
     if(result.playerDefeated){
-      setTimeout(()=>{dom.playerChar.classList.add('hit','dead');showImpact(dom.playerChar);},400);
-    }else if(result.computerDefeated){
-      setTimeout(()=>{dom.enemyChar.classList.add('hit','dead');showImpact(dom.enemyChar);},400);
+      setTimeout(()=>{
+        const heavy=pI&&(pI.anim==='dark'||pI.anim==='ult'||pI.anim==='meteor');
+        dom.playerChar.classList.add(heavy?'take-heavy':'take-hit');
+        dom.playerChar.classList.add('dead');spawnImpact(dom.playerChar,heavy);
+        if(heavy){shakeScreen(true);flashScreen('red')}else shakeScreen(false);
+      },400);
     }
-  },100);
+    if(result.computerDefeated){
+      setTimeout(()=>{
+        const heavy=cI&&(cI.anim==='dark'||cI.anim==='ult'||cI.anim==='meteor');
+        dom.enemyChar.classList.add(heavy?'take-heavy':'take-hit');
+        dom.enemyChar.classList.add('dead');spawnImpact(dom.enemyChar,heavy);
+        if(heavy){shakeScreen(true);flashScreen('white')}else shakeScreen(false);
+      },400);
+    }
+    // Shield pierce effect
+    if(pI&&pI.type==='attack'&&pI.shieldResult==='energyLoss'&&cMove==='护盾'){
+      setTimeout(()=>{const sb=document.createElement('div');sb.className='shield-break';const sr=dom.enemyShield.getBoundingClientRect(),ar=dom.arena.getBoundingClientRect();sb.style.left=(sr.left-ar.left)+'px';sb.style.top=(sr.top-ar.top)+'px';sb.style.width=sr.width+'px';sb.style.height=sr.height+'px';dom.arena.appendChild(sb);setTimeout(()=>sb.remove(),600)},350);
+    }
+    if(cI&&cI.type==='attack'&&cI.shieldResult==='energyLoss'&&pMove==='护盾'){
+      setTimeout(()=>{const sb=document.createElement('div');sb.className='shield-break';const sr=dom.playerShield.getBoundingClientRect(),ar=dom.arena.getBoundingClientRect();sb.style.left=(sr.left-ar.left)+'px';sb.style.top=(sr.top-ar.top)+'px';sb.style.width=sr.width+'px';sb.style.height=sr.height+'px';dom.arena.appendChild(sb);setTimeout(()=>sb.remove(),600)},350);
+    }
+  },80);
 
-  // Result popup
+  // Result text
   setTimeout(()=>{
-    dom.resultPop.textContent=result.description;
-    dom.resultPop.classList.add('show');
+    dom.resultPop.textContent=result.description;dom.resultPop.classList.add('show');
     if(result.playerDefeated)dom.resultPop.classList.add('lose');
     else if(result.computerDefeated)dom.resultPop.classList.add('win');
     else dom.resultPop.classList.add('tie');
-  },500);
+  },550);
 }
 
-function showImpact(charEl){
-  const arena=dom.playerChar.parentElement;
-  const rect=charEl.getBoundingClientRect(),aRect=arena.getBoundingClientRect();
-  dom.impactFx.style.left=(rect.left+rect.width/2-aRect.left-15)+'px';
-  dom.impactFx.style.top=(rect.top+rect.height/2-aRect.top-15)+'px';
-  dom.impactFx.textContent='💥';
-  dom.impactFx.classList.add('show');
-  setTimeout(()=>dom.impactFx.classList.remove('show'),500);
-}
-
-// ── Card Rendering ──
+// ── Cards ──
 function rebuildCards(){
-  const moves=getPlayerMoves();
-  const baseK=Object.keys(BASE_MOVES),p2K=Object.keys(PHASE2_BONUS),p3K=Object.keys(PHASE3_BONUS);
+  const moves=getPlayerMoves(),baseK=Object.keys(BASE_MOVES),p2K=Object.keys(PHASE2_BONUS),p3K=Object.keys(PHASE3_BONUS);
   const hasP2=p2K.some(k=>moves[k]),hasP3=p3K.some(k=>moves[k]);
-
-  dom.cardTabs.innerHTML='';
-  const tabs=[{id:'base',label:'基础',cls:''}];
-  if(hasP2)tabs.push({id:'p2',label:'P2',cls:'p2tab'});
-  if(hasP3)tabs.push({id:'p3',label:'P3',cls:'p3tab'});
+  dom.cardTabs.innerHTML='';const tabs=[{id:'base',label:'基础',cls:''}];
+  if(hasP2)tabs.push({id:'p2',label:'P2',cls:'p2tab'});if(hasP3)tabs.push({id:'p3',label:'P3',cls:'p3tab'});
   if(!tabs.some(t=>t.id===activeTab))activeTab='base';
-
-  tabs.forEach(t=>{
-    const tb=document.createElement('button');
-    tb.className='ctab '+t.cls+(activeTab===t.id?' on':'');
-    tb.textContent=t.label;
-    tb.addEventListener('click',()=>{activeTab=t.id;movesNeedRebuild=true;rebuildCards();});
-    dom.cardTabs.appendChild(tb);
-  });
-
+  tabs.forEach(t=>{const tb=document.createElement('button');tb.className='ctab '+t.cls+(activeTab===t.id?' on':'');tb.textContent=t.label;tb.addEventListener('click',()=>{activeTab=t.id;movesNeedRebuild=true;rebuildCards()});dom.cardTabs.appendChild(tb)});
   dom.cardsRow.innerHTML='';
-  const keys=activeTab==='p2'?p2K:activeTab==='p3'?p3K:baseK;
-  const src=activeTab==='p2'?PHASE2_BONUS:activeTab==='p3'?PHASE3_BONUS:BASE_MOVES;
-  keys.forEach(name=>{
-    const info=src[name]; if(!moves[name])return;
-    const card=document.createElement('button');
-    card.className='card '+info.type+(info.phase===2?' p2card':info.phase===3?' p3card':'');
-    card.dataset.move=name;
-    card.innerHTML='<span class="cicon">'+info.icon+'</span><span class="cname">'+name+'</span><span class="ccost"></span>';
-    card.addEventListener('click',()=>{if(!card.disabled)handleCardClick(name,card);});
-    dom.cardsRow.appendChild(card);
-  });
-  movesNeedRebuild=false;
-  refreshCardStates();
+  const keys=activeTab==='p2'?p2K:activeTab==='p3'?p3K:baseK,src=activeTab==='p2'?PHASE2_BONUS:activeTab==='p3'?PHASE3_BONUS:BASE_MOVES;
+  keys.forEach(name=>{const info=src[name];if(!moves[name])return;const card=document.createElement('button');card.className='card '+info.type+(info.phase===2?' p2card':info.phase===3?' p3card':'');card.dataset.move=name;card.innerHTML='<span class="cicon">'+info.icon+'</span><span class="cname">'+name+'</span><span class="ccost"></span>';card.addEventListener('click',()=>{if(!card.disabled)handleCardClick(name,card)});dom.cardsRow.appendChild(card)});
+  movesNeedRebuild=false;refreshCardStates();
 }
-
 function refreshCardStates(){
-  if(movesNeedRebuild){rebuildCards();return;}
-  const moves=getPlayerMoves();
-  dom.cardsRow.querySelectorAll('.card').forEach(card=>{
-    const name=card.dataset.move,info=moves[name];
-    if(!info)return;
-    const costEl=card.querySelector('.ccost');
-    if(costEl){
-      if(info.chargeCost){
-        const ch=state.playerBingdiaoCharges;
-        if(ch>0){costEl.className='ccharge';costEl.textContent='×'+ch;}
-        else{costEl.className='ccost';costEl.textContent='-'+info.chargeCost+'能→'+info.chargesPerPay+'次';}
-      }else{
-        costEl.className='ccost';
-        costEl.textContent=info.type==='charge'?'+1能':info.type==='shield'||info.type==='flyshield'?'免费':'-'+info.cost+'能';
-      }
-    }
-    if(state.awaitingPlayer&&!state.gameOver){
-      if(info.chargeCost)card.disabled=!(state.playerBingdiaoCharges>0||state.playerEnergy>=info.chargeCost);
-      else card.disabled=(info.type==='attack'&&state.playerEnergy<info.cost);
-    }else{card.disabled=true;}
-  });
-}
+  if(movesNeedRebuild){rebuildCards();return}
+  const moves=getPlayerMoves();dom.cardsRow.querySelectorAll('.card').forEach(card=>{const name=card.dataset.move,info=moves[name];if(!info)return;const costEl=card.querySelector('.ccost');if(costEl){if(info.chargeCost){const ch=state.playerBingdiaoCharges;if(ch>0){costEl.className='ccharge';costEl.textContent='×'+ch}else{costEl.className='ccost';costEl.textContent='-'+info.chargeCost+'能→'+info.chargesPerPay+'次'}}else{costEl.className='ccost';costEl.textContent=info.type==='charge'?'+1能':info.type==='shield'||info.type==='flyshield'?'免费':'-'+info.cost+'能'}}if(state.awaitingPlayer&&!state.gameOver){if(info.chargeCost)card.disabled=!(state.playerBingdiaoCharges>0||state.playerEnergy>=info.chargeCost);else card.disabled=(info.type==='attack'&&state.playerEnergy<info.cost)}else card.disabled=true})}
+function handleCardClick(move,card){playerChoose(move);card.style.transform='scale(0.88)';setTimeout(()=>card.style.transform='',120)}
 
-function handleCardClick(move,card){
-  playerChoose(move);
-  card.style.transform='scale(0.9)';setTimeout(()=>card.style.transform='',150);
-}
-
-// ── Energy bars on characters ──
-function renderCharEnergy(cont,energy){
-  if(cont.children.length!==Math.max(6,energy+1)){
-    cont.innerHTML='';const max=Math.max(6,energy+1);
-    for(let i=0;i<max;i++){const d=document.createElement('span');d.className='edot'+(i<energy?' on':'');cont.appendChild(d);}
-  }else{
-    Array.from(cont.children).forEach((d,i)=>d.className='edot'+(i<energy?' on':''));
-  }
-}
-
+// ── Energy bars ──
+function renderCharEgy(cont,egy){if(cont.children.length!==Math.max(6,egy+1)){cont.innerHTML='';const max=Math.max(6,egy+1);for(let i=0;i<max;i++){const d=document.createElement('span');d.className='edot'+(i<egy?' on':'');cont.appendChild(d)}}else{Array.from(cont.children).forEach((d,i)=>d.className='edot'+(i<egy?' on':''))}}
 function updateUI(){
   dom.pscore.textContent=state.playerScore;dom.cscore.textContent=state.computerScore;
-  if(state.currentPhase===1){dom.phaseTag.textContent='⚔ 第一阶段';dom.phaseTag.className='p1';}
-  else if(state.currentPhase===2){dom.phaseTag.textContent='🌟 第二阶段';dom.phaseTag.className='p2';}
-  else{dom.phaseTag.textContent='💥 第三阶段';dom.phaseTag.className='p3';}
+  if(state.currentPhase===1){dom.phaseTag.textContent='⚔ 第一阶段';dom.phaseTag.className='p1'}else if(state.currentPhase===2){dom.phaseTag.textContent='🌟 第二阶段';dom.phaseTag.className='p2'}else{dom.phaseTag.textContent='💥 第三阶段';dom.phaseTag.className='p3'}
   dom.roundInfo.textContent='第'+state.currentRound+'局 · 先得'+winsPerPhase+'分者获胜';
-
-  renderCharEnergy(dom.playerEgy,state.playerEnergy);
-  renderCharEnergy(dom.enemyEgy,state.computerEnergy);
+  renderCharEgy(dom.playerEgy,state.playerEnergy);renderCharEgy(dom.enemyEgy,state.computerEnergy);
   refreshCardStates();
 }
 
 // ── Game Flow ──
-function startNewRound(){
-  state.playerEnergy=0;state.computerEnergy=0;state.turnInRound=0;state.awaitingPlayer=true;
-  state.playerMove=null;state.computerMove=null;state.lastResult=null;
-  state.playerBingdiaoCharges=0;state.computerBingdiaoCharges=0;
-  clearAnims();
-  dom.resultPop.classList.remove('show','win','lose','tie');dom.resultPop.textContent='';
-  updateUI();
-}
-
-function endRound(winner){
-  if(winner==='player')state.playerScore++;else state.computerScore++;
-  if(currentPhaseHistory){
-    currentPhaseHistory.rounds.push({number:state.currentRound,winner,playerMove:state.playerMove,computerMove:state.computerMove,description:state.lastResult?.description||''});
-  }
-  updateUI();
-  if(state.playerScore>=winsPerPhase||state.computerScore>=winsPerPhase){
-    if(state.currentPhase===1)setTimeout(()=>startPhase2(),1000);
-    else if(state.currentPhase===2)setTimeout(()=>startPhase3(),1000);
-    else setTimeout(()=>endGame(),1000);
-    return;
-  }
-  state.currentRound++;
-  setTimeout(()=>startNewRound(),1200);
-}
-
-function finalizePhaseHistory(winner){
-  if(!currentPhaseHistory)return;
-  currentPhaseHistory.winner=winner;currentPhaseHistory.playerScore=state.playerScore;currentPhaseHistory.computerScore=state.computerScore;
-  gameHistory.phases.push(currentPhaseHistory);currentPhaseHistory=null;
-}
-
-function showOverlay(title,phase,text,btn1Text,btn1Fn,btn2Text,btn2Fn){
-  dom.overlayBox.innerHTML='<h2>'+title+'</h2><div class="phase-result">'+phase+'</div><div class="winner-text">'+text+'</div><button class="btn-primary" id="ov-btn1">'+btn1Text+'</button><button class="btn-secondary" id="ov-btn2">'+btn2Text+'</button>';
-  $('#ov-btn1').addEventListener('click',btn1Fn);
-  $('#ov-btn2').addEventListener('click',btn2Fn);
-  dom.overlay.classList.remove('hidden');
-}
-
-function startPhase2(){
-  movesNeedRebuild=true;activeTab='base';
-  const winner=state.playerScore>=winsPerPhase?'player':'computer';
-  state.phase1Winner=winner;state.phase1PlayerScore=state.playerScore;state.phase1ComputerScore=state.computerScore;
-  finalizePhaseHistory(winner);
-  state.currentPhase=2;state.playerScore=0;state.computerScore=0;state.currentRound=1;
-  currentPhaseHistory={number:2,rounds:[],winner:null,playerScore:0,computerScore:0};
-  const wn=winner==='player'?'你':'电脑';
-  showOverlay('🌟 进入第二阶段！','第一阶段 '+state.phase1PlayerScore+':'+state.phase1ComputerScore,
-    wn+'赢得第一阶段，获得：\n🦄天马  🌟天马流星转转拳',
-    '开始第二阶段',()=>{dom.overlay.classList.add('hidden');startNewRound();},
-    '重新开始',resetGame);
-  state.awaitingPlayer=false;state.gameOver=false;updateUI();
-}
-
-function startPhase3(){
-  movesNeedRebuild=true;activeTab='base';
-  const winner=state.playerScore>=winsPerPhase?'player':'computer';
-  state.phase2Winner=winner;state.phase2PlayerScore=state.playerScore;state.phase2ComputerScore=state.computerScore;
-  finalizePhaseHistory(winner);
-  state.currentPhase=3;state.playerScore=0;state.computerScore=0;state.currentRound=1;
-  currentPhaseHistory={number:3,rounds:[],winner:null,playerScore:0,computerScore:0};
-  const wn=winner==='player'?'你':'电脑';
-  showOverlay('💥 进入第三阶段！','P1:'+state.phase1PlayerScore+':'+state.phase1ComputerScore+' P2:'+state.phase2PlayerScore+':'+state.phase2ComputerScore,
-    wn+'赢得第二阶段，获得：\n❄冰雕 🦅朝翅 ❄🦅冰雕朝翅 💥冰雕朝翅飞 🕊飞飞',
-    '开始第三阶段',()=>{dom.overlay.classList.add('hidden');startNewRound();},
-    '重新开始',resetGame);
-  state.awaitingPlayer=false;state.gameOver=false;updateUI();
-}
-
-function endGame(){
-  const winner=state.playerScore>=winsPerPhase?'player':'computer';
-  finalizePhaseHistory(winner);
-  state.gameOver=true;state.awaitingPlayer=false;updateUI();
-  const pw=winner==='player';
-  const allPh=gameHistory.phases;
-  const pWins=allPh.filter(p=>p.winner==='player').length;
-  showOverlay(pw?'🏆 恭喜！最终胜利！':'💫 虽败犹荣',
-    allPh.map(p=>'P'+p.number+':'+p.playerScore+'-'+p.computerScore).join(' | '),
-    '你赢了'+pWins+'个阶段',
-    '再来一局',resetGame,
-    '📊 复盘对局',showReplay);
-}
-
-function showReplay(){
-  const ap=gameHistory.phases;
-  let h='<h2>📊 对局复盘</h2><div style="text-align:center;color:var(--dim);font-size:0.7em;">每阶段'+winsPerPhase+'局制</div>';
-  for(const ph of ap){
-    const pn=ph.number===1?'⚔ 第一阶段':ph.number===2?'🌟 第二阶段':'💥 第三阶段';
-    h+='<div class="replay-phase"><h4>'+pn+' ('+(ph.winner==='player'?'你胜':'电脑胜')+' '+ph.playerScore+':'+ph.computerScore+')</h4>';
-    for(const rd of ph.rounds){
-      const wIcon=rd.winner==='player'?'<span class="r-win">✅</span>':'<span class="r-lose">❌</span>';
-      h+='<div class="replay-round">'+wIcon+' R'+rd.number+': '+rd.playerMove+' vs '+rd.computerMove+'</div>';
-    }
-    h+='</div>';
-  }
-  const pW=ap.filter(p=>p.winner==='player').length;
-  h+='<div class="replay-final">🏆 '+((pW>ap.length/2)?'你':'电脑')+'获胜！('+pW+':'+(ap.length-pW)+')</div>';
-  h+='<div style="text-align:center;margin-top:8px;"><button class="btn-primary" id="rp-restart">再来一局</button> <button class="btn-secondary" id="rp-close">关闭</button></div>';
-  dom.overlayBox.innerHTML=h;
-  $('#rp-restart').addEventListener('click',resetGame);
-  $('#rp-close').addEventListener('click',()=>dom.overlay.classList.add('hidden'));
-}
-
-function resetGame(){
-  movesNeedRebuild=true;activeTab='base';
-  state={currentPhase:1,phase1Winner:null,phase2Winner:null,phase1PlayerScore:0,phase1ComputerScore:0,phase2PlayerScore:0,phase2ComputerScore:0,playerEnergy:0,computerEnergy:0,playerScore:0,computerScore:0,currentRound:1,turnInRound:0,gameOver:false,awaitingPlayer:true,playerMove:null,computerMove:null,lastResult:null,playerBingdiaoCharges:0,computerBingdiaoCharges:0};
-  gameHistory={winsPerPhase,phases:[]};currentPhaseHistory={number:1,rounds:[],winner:null,playerScore:0,computerScore:0};
-  playerHistory=[];aiMood=0.5;
-  dom.overlay.classList.add('hidden');clearAnims();
-  dom.resultPop.classList.remove('show','win','lose','tie');dom.resultPop.textContent='';
-  startNewRound();
-}
-
-function playerChoose(move){
-  if(!state.awaitingPlayer||state.gameOver)return;
-  const pM=getPlayerMoves();const info=pM[move];
-  if(info.chargeCost){
-    if(!(state.playerBingdiaoCharges>0||state.playerEnergy>=info.chargeCost))return;
-  }else if(info.type==='attack'&&state.playerEnergy<info.cost)return;
-
-  // Handle 冰雕 charge
-  if(info.chargeCost){
-    if(state.playerBingdiaoCharges>0){}else{state.playerEnergy-=info.chargeCost;state.playerBingdiaoCharges=info.chargesPerPay;}
-  }
-
-  state.awaitingPlayer=false;state.playerMove=move;
-  playerHistory.push(move);if(playerHistory.length>30)playerHistory.shift();
-  state.computerMove=aiChoose(state.playerEnergy,state.computerEnergy);
-
-  // AI 冰雕 charge
-  const cInfo=getComputerMoves()[state.computerMove];
-  if(cInfo&&cInfo.chargeCost){
-    if(state.computerBingdiaoCharges>0){}else if(state.computerEnergy>=cInfo.chargeCost){state.computerEnergy-=cInfo.chargeCost;state.computerBingdiaoCharges=cInfo.chargesPerPay;}
-  }
-
-  const result=resolveTurn(state.playerMove,state.computerMove);
-  if(info.chargeCost)state.playerBingdiaoCharges--;
-  if(cInfo&&cInfo.chargeCost)state.computerBingdiaoCharges--;
-
-  state.lastResult=result;state.turnInRound++;
-  state.playerEnergy+=result.playerEnergyDelta;state.computerEnergy+=result.computerEnergyDelta;
-  state.playerEnergy=Math.max(0,state.playerEnergy);state.computerEnergy=Math.max(0,state.computerEnergy);
-
-  // Play animations!
-  playAnim(state.playerMove,state.computerMove,result);
-  updateUI();
-
-  if(result.playerDefeated||result.computerDefeated){
-    const winner=result.playerDefeated?'computer':'player';
-    if(result.computerDefeated)aiMood=Math.min(1,aiMood+0.15);else aiMood=Math.max(0,aiMood-0.1);
-    setTimeout(()=>endRound(winner),1300);
-  }else{setTimeout(()=>{state.awaitingPlayer=true;state.playerMove=null;state.computerMove=null;updateUI();},1300);}
-}
+function startNewRound(){state.playerEnergy=0;state.computerEnergy=0;state.turnInRound=0;state.awaitingPlayer=true;state.playerMove=null;state.computerMove=null;state.lastResult=null;state.playerBingdiaoCharges=0;state.computerBingdiaoCharges=0;clearAllFx();dom.resultPop.className='';dom.resultPop.textContent='';updateUI()}
+function endRound(winner){if(winner==='player')state.playerScore++;else state.computerScore++;if(currentPhaseHistory)currentPhaseHistory.rounds.push({number:state.currentRound,winner,playerMove:state.playerMove,computerMove:state.computerMove,description:state.lastResult?.description||''});updateUI();if(state.playerScore>=winsPerPhase||state.computerScore>=winsPerPhase){if(state.currentPhase===1)setTimeout(()=>startPhase2(),1000);else if(state.currentPhase===2)setTimeout(()=>startPhase3(),1000);else setTimeout(()=>endGame(),1000);return}state.currentRound++;setTimeout(()=>startNewRound(),1400)}
+function finalizePhaseHistory(w){if(!currentPhaseHistory)return;currentPhaseHistory.winner=w;currentPhaseHistory.playerScore=state.playerScore;currentPhaseHistory.computerScore=state.computerScore;gameHistory.phases.push(currentPhaseHistory);currentPhaseHistory=null}
+function showOverlay(t,p,text,b1,f1,b2,f2){dom.overlayBox.innerHTML='<h2>'+t+'</h2><div class="phase-result">'+p+'</div><div class="winner-text">'+text+'</div><button class="btn-primary" id="ov1">'+b1+'</button><button class="btn-secondary" id="ov2">'+b2+'</button>';$('#ov1').addEventListener('click',f1);$('#ov2').addEventListener('click',f2);dom.overlay.classList.remove('hidden')}
+function startPhase2(){movesNeedRebuild=true;activeTab='base';const w=state.playerScore>=winsPerPhase?'player':'computer';state.phase1Winner=w;state.phase1PlayerScore=state.playerScore;state.phase1ComputerScore=state.computerScore;finalizePhaseHistory(w);state.currentPhase=2;state.playerScore=0;state.computerScore=0;state.currentRound=1;currentPhaseHistory={number:2,rounds:[],winner:null,playerScore:0,computerScore:0};const wn=w==='player'?'你':'电脑';showOverlay('🌟 进入第二阶段！','第一阶段 '+state.phase1PlayerScore+':'+state.phase1ComputerScore,wn+'赢得第一阶段\n获得: 🦄天马 🌟天马流星转转拳','开始第二阶段',()=>{dom.overlay.classList.add('hidden');startNewRound()},'重新开始',resetGame);state.awaitingPlayer=false;state.gameOver=false;updateUI()}
+function startPhase3(){movesNeedRebuild=true;activeTab='base';const w=state.playerScore>=winsPerPhase?'player':'computer';state.phase2Winner=w;state.phase2PlayerScore=state.playerScore;state.phase2ComputerScore=state.computerScore;finalizePhaseHistory(w);state.currentPhase=3;state.playerScore=0;state.computerScore=0;state.currentRound=1;currentPhaseHistory={number:3,rounds:[],winner:null,playerScore:0,computerScore:0};const wn=w==='player'?'你':'电脑';showOverlay('💥 进入第三阶段！','P1:'+state.phase1PlayerScore+':'+state.phase1ComputerScore+' P2:'+state.phase2PlayerScore+':'+state.phase2ComputerScore,wn+'赢得第二阶段\n获得: ❄冰雕 🦅朝翅 ❄🦅冰雕朝翅 💥冰雕朝翅飞 🕊飞飞','开始第三阶段',()=>{dom.overlay.classList.add('hidden');startNewRound()},'重新开始',resetGame);state.awaitingPlayer=false;state.gameOver=false;updateUI()}
+function endGame(){const w=state.playerScore>=winsPerPhase?'player':'computer';finalizePhaseHistory(w);state.gameOver=true;state.awaitingPlayer=false;updateUI();const pw=w==='player',ap=gameHistory.phases,pW=ap.filter(p=>p.winner==='player').length;showOverlay(pw?'🏆 恭喜！最终胜利！':'💫 虽败犹荣',ap.map(p=>'P'+p.number+':'+p.playerScore+'-'+p.computerScore).join(' | '),'你赢了'+pW+'个阶段','再来一局',resetGame,'📊 复盘对局',showReplay)}
+function showReplay(){const ap=gameHistory.phases;let h='<h2>📊 复盘</h2><div style="text-align:center;color:var(--dim);font-size:0.65em">每阶段'+winsPerPhase+'局制</div>';for(const ph of ap){h+='<div class="replay-phase"><h4>'+(ph.number===1?'⚔第一':ph.number===2?'🌟第二':'💥第三')+'阶段 ('+(ph.winner==='player'?'你胜':'电脑胜')+' '+ph.playerScore+':'+ph.computerScore+')</h4>';for(const rd of ph.rounds)h+='<div class="replay-round">'+(rd.winner==='player'?'<span class="r-win">✅</span>':'<span class="r-lose">❌</span>')+' R'+rd.number+': '+rd.playerMove+' vs '+rd.computerMove+'</div>';h+='</div>'}const pW=ap.filter(p=>p.winner==='player').length;h+='<div class="replay-final">🏆 '+((pW>ap.length/2)?'你':'电脑')+'获胜 ('+pW+':'+(ap.length-pW)+')</div><div style="text-align:center;margin-top:6px"><button class="btn-primary" id="rpr">再来一局</button> <button class="btn-secondary" id="rpc">关闭</button></div>';dom.overlayBox.innerHTML=h;$('#rpr').addEventListener('click',resetGame);$('#rpc').addEventListener('click',()=>dom.overlay.classList.add('hidden'))}
+function resetGame(){movesNeedRebuild=true;activeTab='base';state={currentPhase:1,phase1Winner:null,phase2Winner:null,phase1PlayerScore:0,phase1ComputerScore:0,phase2PlayerScore:0,phase2ComputerScore:0,playerEnergy:0,computerEnergy:0,playerScore:0,computerScore:0,currentRound:1,turnInRound:0,gameOver:false,awaitingPlayer:true,playerMove:null,computerMove:null,lastResult:null,playerBingdiaoCharges:0,computerBingdiaoCharges:0};gameHistory={winsPerPhase,phases:[]};currentPhaseHistory={number:1,rounds:[],winner:null,playerScore:0,computerScore:0};playerHistory=[];aiMood=0.5;dom.overlay.classList.add('hidden');clearAllFx();dom.resultPop.className='';dom.resultPop.textContent='';startNewRound()}
+function playerChoose(move){if(!state.awaitingPlayer||state.gameOver)return;const pM=getPlayerMoves(),info=pM[move];if(info.chargeCost){if(!(state.playerBingdiaoCharges>0||state.playerEnergy>=info.chargeCost))return}else if(info.type==='attack'&&state.playerEnergy<info.cost)return;if(info.chargeCost){if(state.playerBingdiaoCharges>0){}else{state.playerEnergy-=info.chargeCost;state.playerBingdiaoCharges=info.chargesPerPay}}state.awaitingPlayer=false;state.playerMove=move;playerHistory.push(move);if(playerHistory.length>30)playerHistory.shift();state.computerMove=aiChoose(state.playerEnergy,state.computerEnergy);const cInfo=getComputerMoves()[state.computerMove];if(cInfo&&cInfo.chargeCost){if(state.computerBingdiaoCharges>0){}else if(state.computerEnergy>=cInfo.chargeCost){state.computerEnergy-=cInfo.chargeCost;state.computerBingdiaoCharges=cInfo.chargesPerPay}}const result=resolveTurn(state.playerMove,state.computerMove);if(info.chargeCost)state.playerBingdiaoCharges--;if(cInfo&&cInfo.chargeCost)state.computerBingdiaoCharges--;state.lastResult=result;state.turnInRound++;state.playerEnergy+=result.playerEnergyDelta;state.computerEnergy+=result.computerEnergyDelta;state.playerEnergy=Math.max(0,state.playerEnergy);state.computerEnergy=Math.max(0,state.computerEnergy);playAnim(state.playerMove,state.computerMove,result);updateUI();if(result.playerDefeated||result.computerDefeated){const winner=result.playerDefeated?'computer':'player';if(result.computerDefeated)aiMood=Math.min(1,aiMood+0.15);else aiMood=Math.max(0,aiMood-0.1);setTimeout(()=>endRound(winner),1400)}else{setTimeout(()=>{state.awaitingPlayer=true;state.playerMove=null;state.computerMove=null;updateUI()},1400)}}
 
 // ── Setup ──
-$$('#win-options .win-opt').forEach(b=>b.addEventListener('click',()=>{
-  $$('#win-options .win-opt').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');
-  selectedWins=parseInt(b.dataset.wins);
-}));
-$('#start-game-btn').addEventListener('click',()=>{
-  winsPerPhase=selectedWins;movesNeedRebuild=true;
-  gameHistory.winsPerPhase=winsPerPhase;
-  currentPhaseHistory={number:1,rounds:[],winner:null,playerScore:0,computerScore:0};
-  dom.setup.classList.add('hidden');
-  startNewRound();
-});
-
-// ── Events ──
+$$('#win-options .win-opt').forEach(b=>b.addEventListener('click',()=>{$$('#win-options .win-opt').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');selectedWins=parseInt(b.dataset.wins)}));
+$('#start-game-btn').addEventListener('click',()=>{winsPerPhase=selectedWins;movesNeedRebuild=true;gameHistory.winsPerPhase=winsPerPhase;currentPhaseHistory={number:1,rounds:[],winner:null,playerScore:0,computerScore:0};dom.setup.classList.add('hidden');startNewRound()});
 $('#rules-btn').addEventListener('click',()=>$('#rules-modal').classList.remove('hidden'));
 $('#rules-close').addEventListener('click',()=>$('#rules-modal').classList.add('hidden'));
-$('#rules-modal').addEventListener('click',e=>{if(e.target===$('#rules-modal'))$('#rules-modal').classList.add('hidden');});
-
-document.addEventListener('keydown',e=>{
-  if(!state.awaitingPlayer||state.gameOver)return;
-  const keys={'1':'苍心','2':'护盾','3':'波波','4':'六电','5':'搓搓','6':'八嘎','7':'天马','8':'天马流星转转拳','9':'冰雕','0':'朝翅','-':'冰雕朝翅','=':'冰雕朝翅飞','f':'飞飞'};
-  const move=keys[e.key];if(move&&getPlayerMoves()[move])playerChoose(move);
-});
-
-console.log('🧘 苍心 · 气功对决 — 动作卡牌版');
+$('#rules-modal').addEventListener('click',e=>{if(e.target===$('#rules-modal'))$('#rules-modal').classList.add('hidden')});
+document.addEventListener('keydown',e=>{if(!state.awaitingPlayer||state.gameOver)return;const keys={'1':'苍心','2':'护盾','3':'波波','4':'六电','5':'搓搓','6':'八嘎','7':'天马','8':'天马流星转转拳','9':'冰雕','0':'朝翅','-':'冰雕朝翅','=':'冰雕朝翅飞','f':'飞飞'};const move=keys[e.key];if(move&&getPlayerMoves()[move])playerChoose(move)});
 })();
 </script>
 </body>
