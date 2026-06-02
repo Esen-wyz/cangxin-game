@@ -638,6 +638,13 @@
 
 <canvas id="particles"></canvas>
 
+<div id="debug-bar" style="position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#0f0;font-size:10px;padding:4px 8px;z-index:300;font-family:monospace;display:flex;gap:12px;flex-wrap:wrap;">
+  <span>v2.1</span>
+  <span id="db-phase">Phase:1</span>
+  <span id="db-scores">P0:C0</span>
+  <span id="db-round">R1</span>
+</div>
+
 <script>
 (function() {
   // ==================== GAME CONFIG ====================
@@ -730,6 +737,9 @@
     rulesBtn: $('#rules-btn'),
     rulesModal: $('#rules-modal'),
     rulesClose: $('#rules-close'),
+    dbPhase: $('#db-phase'),
+    dbScores: $('#db-scores'),
+    dbRound: $('#db-round'),
     particles: $('#particles'),
   };
 
@@ -1098,6 +1108,11 @@
 
     // Move buttons
     renderMoveButtons();
+
+    // Debug bar
+    dom.dbPhase.textContent = 'Phase:' + state.currentPhase;
+    dom.dbScores.textContent = 'P' + state.playerScore + ':C' + state.computerScore;
+    dom.dbRound.textContent = 'R' + state.currentRound + ' T' + state.turnInRound;
   }
 
   function revealMoves(playerMove, computerMove, result) {
@@ -1224,11 +1239,19 @@
 
     // Check if someone won the current phase
     if (state.playerScore >= WIN_SCORE || state.computerScore >= WIN_SCORE) {
+      console.log('🏁 endRound: phase=' + state.currentPhase + ' player=' + state.playerScore + ' computer=' + state.computerScore);
       if (state.currentPhase === 1) {
-        // Phase 1 just ended → transition to Phase 2
-        setTimeout(() => startPhase2(), 800);
+        console.log('➡ 进入 startPhase2');
+        setTimeout(() => {
+          try {
+            startPhase2();
+          } catch(e) {
+            console.error('startPhase2 出错:', e);
+            alert('第二阶段启动失败: ' + e.message);
+          }
+        }, 800);
       } else {
-        // Phase 2 ended → game over
+        console.log('➡ 进入 endGame');
         setTimeout(() => endGame(), 800);
       }
       return;
@@ -1240,6 +1263,7 @@
   }
 
   function startPhase2() {
+    console.log('🌟 startPhase2 被调用! phase=' + state.currentPhase + ' score=' + state.playerScore + ':' + state.computerScore);
     // Determine Phase 1 winner
     if (state.playerScore >= WIN_SCORE) {
       state.phase1Winner = 'player';
@@ -1279,6 +1303,7 @@
   }
 
   function endGame() {
+    console.log('💀 endGame 被调用! phase=' + state.currentPhase + ' score=' + state.playerScore + ':' + state.computerScore);
     state.gameOver = true;
     state.awaitingPlayer = false;
     updateUI();
