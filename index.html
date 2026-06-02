@@ -786,6 +786,11 @@
       if (available.includes('六电') && computerEnergy >= 2) weights['六电'] += 3;
     }
 
+    // If both have 0 energy (first turn), always 苍心 — no reason to shield
+    if (computerEnergy === 0 && playerEnergy === 0) {
+      if (available.includes('苍心')) weights['苍心'] += 1000;
+    }
+
     // If AI has low energy, prefer 苍心
     if (computerEnergy <= 1) {
       if (available.includes('苍心')) weights['苍心'] += 5;
