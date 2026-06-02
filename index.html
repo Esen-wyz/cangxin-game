@@ -19,10 +19,7 @@
     --heal: #27ae60;
     --shield: #2980b9;
     --energy: #f39c12;
-    --attack-1: #e67e22;
-    --attack-2: #e74c3c;
-    --attack-3: #8e44ad;
-    --attack-4: #2c3e50;
+    --bonus: #f1c40f;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -46,11 +43,11 @@
 
   #game {
     width: 100%;
-    max-width: 460px;
+    max-width: 480px;
     padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
     min-height: 100vh;
     justify-content: center;
   }
@@ -58,22 +55,42 @@
   /* --- Header --- */
   #header {
     text-align: center;
-    padding: 8px 0;
+    padding: 4px 0;
   }
   #header h1 {
-    font-size: 2.2em;
+    font-size: 2em;
     background: linear-gradient(180deg, var(--gold-light) 0%, var(--gold) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     letter-spacing: 0.15em;
-    text-shadow: none;
     filter: drop-shadow(0 2px 4px rgba(201,169,110,0.3));
   }
   #header .subtitle {
-    font-size: 0.85em;
+    font-size: 0.8em;
     color: var(--text-dim);
     letter-spacing: 0.2em;
+  }
+
+  /* --- Phase Banner --- */
+  #phase-banner {
+    text-align: center;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-size: 0.85em;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+    transition: all 0.5s;
+  }
+  #phase-banner.phase1 {
+    background: rgba(201,169,110,0.1);
+    border: 1px solid rgba(201,169,110,0.3);
+    color: var(--gold);
+  }
+  #phase-banner.phase2 {
+    background: rgba(241,196,15,0.1);
+    border: 1px solid rgba(241,196,15,0.4);
+    color: var(--bonus);
   }
 
   /* --- Scoreboard --- */
@@ -92,16 +109,16 @@
     flex: 1;
   }
   .score-item .label {
-    font-size: 0.8em;
+    font-size: 0.75em;
     color: var(--text-dim);
   }
   .score-item .name {
-    font-size: 0.9em;
+    font-size: 0.85em;
     font-weight: bold;
     color: var(--gold);
   }
   .score-item .points {
-    font-size: 2em;
+    font-size: 1.8em;
     font-weight: bold;
     color: var(--gold-light);
   }
@@ -109,17 +126,26 @@
     font-size: 1.2em;
     color: var(--text-dim);
   }
+  .score-item .bonus-tag {
+    font-size: 0.6em;
+    color: var(--bonus);
+    background: rgba(241,196,15,0.15);
+    padding: 1px 6px;
+    border-radius: 6px;
+    display: inline-block;
+    margin-top: 2px;
+  }
 
   /* --- Battle Arena --- */
   #arena {
     background: var(--surface);
     border-radius: 16px;
     border: 1px solid rgba(201,169,110,0.15);
-    padding: 16px;
-    min-height: 180px;
+    padding: 14px;
+    min-height: 160px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
     position: relative;
     overflow: hidden;
   }
@@ -127,33 +153,35 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
   }
   .arena-player {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
     flex: 1;
   }
   .arena-player .who {
-    font-size: 0.75em;
+    font-size: 0.7em;
     color: var(--text-dim);
   }
   .arena-player .energy-bar {
     display: flex;
-    gap: 3px;
+    gap: 2px;
+    flex-wrap: wrap;
+    justify-content: center;
   }
   .energy-dot {
-    width: 10px;
-    height: 10px;
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
     background: #333;
     transition: all 0.3s;
   }
   .energy-dot.active {
     background: var(--energy);
-    box-shadow: 0 0 8px var(--energy);
+    box-shadow: 0 0 6px var(--energy);
   }
   .energy-dot.lost {
     background: #5a3030;
@@ -171,16 +199,16 @@
     gap: 4px;
   }
   #vs-text {
-    font-size: 1.2em;
+    font-size: 1.1em;
     font-weight: bold;
     color: var(--gold);
     letter-spacing: 0.1em;
   }
   #result-text {
-    font-size: 0.9em;
+    font-size: 0.85em;
     color: var(--text);
     text-align: center;
-    min-height: 24px;
+    min-height: 22px;
     font-weight: bold;
     transition: all 0.3s;
   }
@@ -189,26 +217,25 @@
   .result-tie { color: var(--gold) !important; }
 
   .move-reveal {
-    font-size: 1.4em;
+    font-size: 1.3em;
     font-weight: bold;
-    padding: 8px 16px;
+    padding: 6px 14px;
     border-radius: 10px;
-    min-width: 70px;
+    min-width: 60px;
     text-align: center;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     opacity: 0;
     transform: scale(0.5);
   }
-  .move-reveal.shown {
-    opacity: 1;
-    transform: scale(1);
-  }
+  .move-reveal.shown { opacity: 1; transform: scale(1); }
   .move-reveal.cangxin { background: rgba(39,174,96,0.3); color: #2ecc71; }
   .move-reveal.shield { background: rgba(41,128,185,0.3); color: #3498db; }
   .move-reveal.bobo { background: rgba(230,126,34,0.3); color: #e67e22; }
   .move-reveal.liudian { background: rgba(231,76,60,0.3); color: #e74c3c; }
   .move-reveal.cuocuo { background: rgba(142,68,173,0.3); color: #9b59b6; }
   .move-reveal.baga { background: rgba(44,62,80,0.5); color: #95a5a6; }
+  .move-reveal.tianma { background: rgba(241,196,15,0.25); color: #f1c40f; }
+  .move-reveal.liuxing { background: rgba(241,196,15,0.3); color: #f39c12; }
 
   .move-reveal.defeated {
     animation: shake 0.5s ease-in-out;
@@ -234,36 +261,50 @@
     background: var(--surface);
     border-radius: 16px;
     border: 1px solid rgba(201,169,110,0.15);
-    padding: 14px;
+    padding: 12px;
   }
   #moves-section .section-title {
-    font-size: 0.8em;
+    font-size: 0.78em;
     color: var(--text-dim);
     text-align: center;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     letter-spacing: 0.15em;
+  }
+  #moves-section .section-title .bonus-hint {
+    color: var(--bonus);
+    font-size: 0.9em;
   }
   #moves-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+    gap: 7px;
+  }
+  #bonus-row {
+    display: flex;
+    gap: 7px;
+    margin-top: 7px;
+    justify-content: center;
+  }
+  #bonus-row .move-btn {
+    flex: 1;
+    max-width: 140px;
   }
   .move-btn {
     position: relative;
-    padding: 14px 6px;
+    padding: 12px 5px;
     border-radius: 12px;
     border: 1.5px solid rgba(255,255,255,0.1);
     background: rgba(20,20,40,0.8);
     color: var(--text);
     cursor: pointer;
-    font-size: 1.05em;
+    font-size: 1em;
     font-weight: bold;
     font-family: inherit;
     transition: all 0.2s;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
+    gap: 1px;
     overflow: hidden;
   }
   .move-btn:active:not(:disabled) {
@@ -275,10 +316,13 @@
     filter: grayscale(0.6);
   }
   .move-btn .cost {
-    font-size: 0.65em;
+    font-size: 0.6em;
     font-weight: normal;
     opacity: 0.7;
   }
+  .move-btn .icon { font-size: 1.2em; }
+
+  /* Move color themes */
   .move-btn.cangxin { border-color: rgba(46,204,113,0.4); }
   .move-btn.cangxin:not(:disabled):hover { background: rgba(46,204,113,0.15); }
   .move-btn.shield { border-color: rgba(52,152,219,0.4); }
@@ -291,12 +335,33 @@
   .move-btn.cuocuo:not(:disabled):hover { background: rgba(155,89,182,0.15); }
   .move-btn.baga { border-color: rgba(149,165,166,0.4); }
   .move-btn.baga:not(:disabled):hover { background: rgba(149,165,166,0.15); }
-
-  .move-btn .icon {
-    font-size: 1.3em;
+  /* Bonus move styles */
+  .move-btn.tianma {
+    border-color: rgba(241,196,15,0.5);
+    background: rgba(241,196,15,0.08);
+  }
+  .move-btn.tianma:not(:disabled):hover {
+    background: rgba(241,196,15,0.18);
+    box-shadow: 0 0 12px rgba(241,196,15,0.2);
+  }
+  .move-btn.liuxing {
+    border-color: rgba(243,156,18,0.5);
+    background: rgba(243,156,18,0.08);
+  }
+  .move-btn.liuxing:not(:disabled):hover {
+    background: rgba(243,156,18,0.18);
+    box-shadow: 0 0 14px rgba(243,156,18,0.25);
+  }
+  .move-btn .bonus-badge {
+    position: absolute;
+    top: 3px;
+    right: 4px;
+    font-size: 0.55em;
+    color: var(--bonus);
+    opacity: 0.9;
   }
 
-  /* --- Game Over Overlay --- */
+  /* --- Overlay --- */
   #overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -314,7 +379,7 @@
     border: 2px solid var(--gold);
     padding: 32px 24px;
     text-align: center;
-    max-width: 340px;
+    max-width: 360px;
     width: 90%;
     animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
@@ -323,18 +388,24 @@
     100% { transform: scale(1); opacity: 1; }
   }
   #overlay-box h2 {
-    font-size: 1.8em;
+    font-size: 1.7em;
     color: var(--gold-light);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
+  }
+  #overlay-box .phase-result {
+    font-size: 0.8em;
+    color: var(--text-dim);
+    margin-bottom: 4px;
   }
   #overlay-box .winner-text {
-    font-size: 1em;
+    font-size: 0.95em;
     color: var(--text);
-    margin-bottom: 20px;
+    margin-bottom: 16px;
+    line-height: 1.5;
   }
   #overlay-box button {
-    padding: 14px 36px;
-    font-size: 1.1em;
+    padding: 12px 32px;
+    font-size: 1.05em;
     font-weight: bold;
     border: none;
     border-radius: 30px;
@@ -345,9 +416,12 @@
     letter-spacing: 0.1em;
     transition: all 0.2s;
   }
-  #overlay-box button:active {
-    transform: scale(0.95);
-    opacity: 0.8;
+  #overlay-box button:active { transform: scale(0.95); opacity: 0.8; }
+  #overlay-box button.secondary {
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    margin-top: 8px;
   }
 
   /* --- Rules Modal --- */
@@ -386,45 +460,49 @@
     border-radius: 16px;
     border: 1px solid rgba(201,169,110,0.3);
     padding: 20px;
-    max-width: 400px;
+    max-width: 420px;
     width: 92%;
-    max-height: 80vh;
+    max-height: 82vh;
     overflow-y: auto;
     animation: popIn 0.3s ease-out;
   }
   #rules-box h3 {
     color: var(--gold);
     text-align: center;
-    margin-bottom: 12px;
-    font-size: 1.2em;
+    margin-bottom: 10px;
+    font-size: 1.1em;
   }
   #rules-box .rule-group {
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }
   #rules-box .rule-group h4 {
     color: var(--gold-light);
-    font-size: 0.9em;
-    margin-bottom: 4px;
+    font-size: 0.85em;
+    margin-bottom: 3px;
   }
   #rules-box .rule-group p {
-    font-size: 0.8em;
+    font-size: 0.75em;
     color: var(--text-dim);
     line-height: 1.5;
   }
+  #rules-box .rule-group .bonus-rule {
+    border-left: 2px solid var(--bonus);
+    padding-left: 8px;
+  }
   #rules-box .close-btn {
     display: block;
-    margin: 16px auto 0;
-    padding: 10px 28px;
+    margin: 14px auto 0;
+    padding: 8px 24px;
     border-radius: 20px;
     border: 1px solid var(--gold);
     background: transparent;
     color: var(--gold);
     cursor: pointer;
     font-family: inherit;
-    font-size: 0.95em;
+    font-size: 0.9em;
   }
 
-  /* --- Round transition flash --- */
+  /* --- Flash --- */
   .flash {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -434,27 +512,23 @@
   }
   .flash.win { background: radial-gradient(circle, rgba(46,204,113,0.3) 0%, transparent 70%); }
   .flash.lose { background: radial-gradient(circle, rgba(231,76,60,0.3) 0%, transparent 70%); }
+  .flash.phase-up { background: radial-gradient(circle, rgba(241,196,15,0.4) 0%, transparent 70%); animation-duration: 0.8s; }
   @keyframes flashAnim {
     0% { opacity: 1; }
     100% { opacity: 0; }
   }
 
-  /* --- Round info bar --- */
   #round-info {
     text-align: center;
-    font-size: 0.8em;
+    font-size: 0.78em;
     color: var(--text-dim);
     letter-spacing: 0.1em;
   }
-
-  /* --- Turn counter --- */
   #turn-counter {
     text-align: center;
-    font-size: 0.7em;
+    font-size: 0.68em;
     color: var(--text-dim);
   }
-
-  /* --- Particle canvas --- */
   #particles {
     position: fixed;
     top: 0; left: 0;
@@ -472,21 +546,23 @@
     <div class="subtitle">气 功 对 决</div>
   </div>
 
+  <div id="phase-banner" class="phase1">⚔ 第一阶段</div>
+
   <div id="scoreboard">
-    <div class="score-item">
+    <div class="score-item" id="player-scoreboard">
       <div class="label">👤 你</div>
       <div class="name">玩家</div>
       <div id="player-score" class="points">0</div>
     </div>
     <div class="score-divider">:</div>
-    <div class="score-item">
+    <div class="score-item" id="computer-scoreboard">
       <div class="label">🤖 对手</div>
       <div class="name">电脑</div>
       <div id="computer-score" class="points">0</div>
     </div>
   </div>
 
-  <div id="round-info">第 1 局 · 先得 3 分者胜</div>
+  <div id="round-info">第 1 局 · 先得 3 分者赢下本阶段</div>
 
   <div id="arena">
     <div class="arena-row">
@@ -509,35 +585,19 @@
   </div>
 
   <div id="moves-section">
-    <div class="section-title">⚔ 选择你的招式</div>
-    <div id="moves-grid">
-      <button class="move-btn cangxin" data-move="苍心">
-        <span class="icon">☯</span>苍心<span class="cost">+1 能量</span>
-      </button>
-      <button class="move-btn shield" data-move="护盾">
-        <span class="icon">🛡</span>护盾<span class="cost">免费</span>
-      </button>
-      <button class="move-btn bobo" data-move="波波">
-        <span class="icon">💨</span>波波<span class="cost">-1 能量</span>
-      </button>
-      <button class="move-btn liudian" data-move="六电">
-        <span class="icon">⚡</span>六电<span class="cost">-2 能量</span>
-      </button>
-      <button class="move-btn cuocuo" data-move="搓搓">
-        <span class="icon">🔥</span>搓搓<span class="cost">-3 能量</span>
-      </button>
-      <button class="move-btn baga" data-move="八嘎">
-        <span class="icon">💀</span>八嘎<span class="cost">-4 能量</span>
-      </button>
-    </div>
+    <div class="section-title" id="moves-title">⚔ 选择你的招式</div>
+    <div id="moves-grid"></div>
+    <div id="bonus-row"></div>
   </div>
 </div>
 
 <div id="overlay" class="hidden">
   <div id="overlay-box">
     <h2 id="overlay-title"></h2>
+    <p class="phase-result" id="overlay-phase"></p>
     <p class="winner-text" id="overlay-text"></p>
-    <button id="overlay-btn">再来一局</button>
+    <button id="overlay-btn"></button>
+    <button class="secondary hidden" id="overlay-btn2"></button>
   </div>
 </div>
 
@@ -546,20 +606,31 @@
   <div id="rules-box">
     <h3>📜 游戏规则</h3>
     <div class="rule-group">
+      <h4>⚔ 第一阶段 — 基础对决</h4>
+      <p>双方使用 6 种基础招式对战，先赢 3 局者赢得第一阶段，并获得第二阶段专属技能。</p>
+    </div>
+    <div class="rule-group">
       <h4>☯ 苍心（免费）</h4>
       <p>使用后积累 1 点能量。但若对方出任何攻击招式，苍心方直接落败。</p>
     </div>
     <div class="rule-group">
       <h4>🛡 护盾（免费）</h4>
-      <p>完全挡住波波（防御方不损失能量）。被六电击穿，防御方损失 1 能量。被搓搓或八嘎击中则防御无效，直接落败。</p>
+      <p>完全挡住波波和天马（防御方不损失能量）。被六电击穿，防御方损失 1 能量。被搓搓、八嘎、天马流星转转拳击中则防御无效，直接落败。</p>
     </div>
     <div class="rule-group">
-      <h4>攻击招式等级</h4>
-      <p>💨 波波（-1能量）< ⚡ 六电（-2能量）< 🔥 搓搓（-3能量）< 💀 八嘎（-4能量）<br>高等级攻击击败低等级攻击。同等级平手。</p>
+      <h4>攻击招式等级（第一阶段）</h4>
+      <p>💨 波波（-1能量）< ⚡ 六电（-2能量）< 🔥 搓搓（-3能量）< 💀 八嘎（-4能量）</p>
+    </div>
+    <div class="rule-group">
+      <h4>🌟 第二阶段 — 新技能（仅第一阶段赢家可用）</h4>
+      <div class="bonus-rule">
+        <p>🦄 <b>天马</b>（-1能量）：威力=六电，但打在护盾上对面不损失能量（与六电的区别！）</p>
+        <p>🌟 <b>天马流星转转拳</b>（-3能量）：威力=八嘎，可穿透护盾</p>
+      </div>
     </div>
     <div class="rule-group">
       <h4>🏆 胜利条件</h4>
-      <p>每局双方同时出招，击败对方即赢得该局。先赢 3 局者获得最终胜利。每局开始能量归零。</p>
+      <p>第一阶段先赢 3 局者获得专属技能。第二阶段先赢 3 局者获得最终胜利！每局能量归零重新开始。</p>
     </div>
     <button class="close-btn" id="rules-close">知道了</button>
   </div>
@@ -572,19 +643,29 @@
   // ==================== GAME CONFIG ====================
   const WIN_SCORE = 3;
 
-  const MOVES = {
-    '苍心': { type: 'charge', cost: 0, power: 0, icon: '☯', cssClass: 'cangxin' },
-    '护盾': { type: 'shield', cost: 0, power: 0, icon: '🛡', cssClass: 'shield' },
-    '波波': { type: 'attack', cost: 1, power: 1, icon: '💨', cssClass: 'bobo' },
-    '六电': { type: 'attack', cost: 2, power: 2, icon: '⚡', cssClass: 'liudian' },
-    '搓搓': { type: 'attack', cost: 3, power: 3, icon: '🔥', cssClass: 'cuocuo' },
-    '八嘎': { type: 'attack', cost: 4, power: 4, icon: '💀', cssClass: 'baga' },
+  // Base moves (Phase 1 & always available)
+  // shieldResult: 'blocked' | 'energyLoss' | 'pierce'
+  const BASE_MOVES = {
+    '苍心': { type: 'charge', cost: 0, power: 0, icon: '☯', cssClass: 'cangxin', desc: '+1能量，但被攻击即败' },
+    '护盾': { type: 'shield', cost: 0, power: 0, icon: '🛡', cssClass: 'shield', desc: '防御' },
+    '波波': { type: 'attack', cost: 1, power: 1, icon: '💨', cssClass: 'bobo', shieldResult: 'blocked', desc: '基础攻击' },
+    '六电': { type: 'attack', cost: 2, power: 2, icon: '⚡', cssClass: 'liudian', shieldResult: 'energyLoss', desc: '击穿护盾-1能量' },
+    '搓搓': { type: 'attack', cost: 3, power: 3, icon: '🔥', cssClass: 'cuocuo', shieldResult: 'pierce', desc: '穿透护盾' },
+    '八嘎': { type: 'attack', cost: 4, power: 4, icon: '💀', cssClass: 'baga', shieldResult: 'pierce', desc: '穿透护盾' },
   };
 
-  const ATTACKS = ['波波', '六电', '搓搓', '八嘎'];
+  // Bonus moves (Phase 2, winner only)
+  const BONUS_MOVES = {
+    '天马': { type: 'attack', cost: 1, power: 2, icon: '🦄', cssClass: 'tianma', shieldResult: 'blocked', bonus: true, desc: '威力=六电，护盾完全挡住' },
+    '天马流星转转拳': { type: 'attack', cost: 3, power: 4, icon: '🌟', cssClass: 'liuxing', shieldResult: 'pierce', bonus: true, desc: '威力=八嘎，穿透护盾' },
+  };
 
   // ==================== GAME STATE ====================
   let state = {
+    currentPhase: 1,            // 1 or 2
+    phase1Winner: null,         // 'player' | 'computer' | null
+    phase1PlayerScore: 0,       // saved Phase 1 scores
+    phase1ComputerScore: 0,
     playerEnergy: 0,
     computerEnergy: 0,
     playerScore: 0,
@@ -598,17 +679,38 @@
     lastResult: null,
   };
 
-  // AI memory: track player's move history for adaptation
   let playerHistory = [];
-  let aiMood = 0.5; // 0 = defensive, 1 = aggressive
+  let aiMood = 0.5;
+
+  // ==================== DYNAMIC MOVESETS ====================
+  function getPlayerMoves() {
+    if (state.currentPhase === 1) return BASE_MOVES;
+    if (state.phase1Winner === 'player') return { ...BASE_MOVES, ...BONUS_MOVES };
+    return BASE_MOVES;
+  }
+
+  function getComputerMoves() {
+    if (state.currentPhase === 1) return BASE_MOVES;
+    if (state.phase1Winner === 'computer') return { ...BASE_MOVES, ...BONUS_MOVES };
+    return BASE_MOVES;
+  }
+
+  function getAllAttackNames(moveset) {
+    return Object.entries(moveset)
+      .filter(([_, info]) => info.type === 'attack')
+      .map(([name, _]) => name);
+  }
 
   // ==================== DOM REFS ====================
   const $ = (sel) => document.querySelector(sel);
   const $$ = (sel) => document.querySelectorAll(sel);
 
   const dom = {
+    phaseBanner: $('#phase-banner'),
     playerScore: $('#player-score'),
     computerScore: $('#computer-score'),
+    playerScoreboard: $('#player-scoreboard'),
+    computerScoreboard: $('#computer-scoreboard'),
     roundInfo: $('#round-info'),
     playerEnergyBar: $('#player-energy-bar'),
     computerEnergyBar: $('#computer-energy-bar'),
@@ -616,11 +718,15 @@
     computerReveal: $('#computer-reveal'),
     resultText: $('#result-text'),
     turnCounter: $('#turn-counter'),
-    moveBtns: $$('.move-btn'),
+    movesGrid: $('#moves-grid'),
+    bonusRow: $('#bonus-row'),
+    movesTitle: $('#moves-title'),
     overlay: $('#overlay'),
     overlayTitle: $('#overlay-title'),
+    overlayPhase: $('#overlay-phase'),
     overlayText: $('#overlay-text'),
     overlayBtn: $('#overlay-btn'),
+    overlayBtn2: $('#overlay-btn2'),
     rulesBtn: $('#rules-btn'),
     rulesModal: $('#rules-modal'),
     rulesClose: $('#rules-close'),
@@ -629,6 +735,11 @@
 
   // ==================== RESOLUTION LOGIC ====================
   function resolveTurn(pMove, cMove, pEnergy, cEnergy) {
+    const pMoves = getPlayerMoves();
+    const cMoves = getComputerMoves();
+    const pAttacks = getAllAttackNames(pMoves);
+    const cAttacks = getAllAttackNames(cMoves);
+
     const result = {
       playerEnergyDelta: 0,
       computerEnergyDelta: 0,
@@ -637,27 +748,29 @@
       description: '',
     };
 
-    const pIsAttack = ATTACKS.includes(pMove);
-    const cIsAttack = ATTACKS.includes(cMove);
+    const pInfo = pMoves[pMove];
+    const cInfo = cMoves[cMove];
+    const pIsAttack = pInfo.type === 'attack';
+    const cIsAttack = cInfo.type === 'attack';
     const pIsCangxin = pMove === '苍心';
     const cIsCangxin = cMove === '苍心';
     const pIsShield = pMove === '护盾';
     const cIsShield = cMove === '护盾';
 
-    // --- Phase 1: 苍心 energy gain ---
+    // --- 1. 苍心 energy gain ---
     if (pIsCangxin) result.playerEnergyDelta += 1;
     if (cIsCangxin) result.computerEnergyDelta += 1;
 
-    // --- Phase 2: 苍心 vulnerability ---
+    // --- 2. 苍心 vulnerability (any attack defeats 苍心) ---
     if (pIsCangxin && cIsAttack) {
       result.playerDefeated = true;
-      result.computerEnergyDelta -= MOVES[cMove].cost;
+      result.computerEnergyDelta -= cInfo.cost;
       result.description = '你正在蓄力（苍心），被对手的 ' + cMove + ' 击败！';
       return result;
     }
     if (cIsCangxin && pIsAttack) {
       result.computerDefeated = true;
-      result.playerEnergyDelta -= MOVES[pMove].cost;
+      result.playerEnergyDelta -= pInfo.cost;
       result.description = '对手正在蓄力（苍心），被你的 ' + pMove + ' 击败！';
       return result;
     }
@@ -668,50 +781,47 @@
       return result;
     }
 
-    // --- Phase 3: 护盾 interactions ---
-    if (pIsShield) {
-      if (cMove === '波波') {
-        result.computerEnergyDelta -= 1;
-        result.description = '你的护盾轻松挡住了对手的波波！';
-        return result;
-      } else if (cMove === '六电') {
-        result.playerEnergyDelta -= 1;
-        result.computerEnergyDelta -= 2;
-        result.description = '护盾被六电击穿！你损失 1 点能量';
-        return result;
-      } else if (cMove === '搓搓' || cMove === '八嘎') {
-        result.playerDefeated = true;
-        result.computerEnergyDelta -= MOVES[cMove].cost;
-        result.description = '护盾无法抵挡 ' + cMove + '！你被击败了';
-        return result;
+    // --- 3. 护盾 interactions (data-driven) ---
+    function handleShield(shieldUser, attackMove, attackInfo, isPlayerShielding) {
+      const r = { playerEnergyDelta: 0, computerEnergyDelta: 0, playerDefeated: false, computerDefeated: false, description: '' };
+      const attackerLabel = isPlayerShielding ? '对手的' : '你的';
+      const defenderLabel = isPlayerShielding ? '你的护盾' : '对手的护盾';
+      const attEnergyKey = isPlayerShielding ? 'computerEnergyDelta' : 'playerEnergyDelta';
+      const defEnergyKey = isPlayerShielding ? 'playerEnergyDelta' : 'computerEnergyDelta';
+      const defDefeatedKey = isPlayerShielding ? 'playerDefeated' : 'computerDefeated';
+
+      r[attEnergyKey] -= attackInfo.cost;
+
+      const sr = attackInfo.shieldResult;
+      if (sr === 'blocked') {
+        r.description = defenderLabel + '轻松挡住了' + attackerLabel + attackMove + '！';
+      } else if (sr === 'energyLoss') {
+        r[defEnergyKey] -= 1;
+        r.description = defenderLabel + '被' + attackMove + '击穿！防御方损失 1 点能量';
+      } else if (sr === 'pierce') {
+        r[defDefeatedKey] = true;
+        r.description = defenderLabel + '无法抵挡 ' + attackMove + '！防御方被击败';
       }
-      // 苍心 vs 护盾: 苍心 already gained energy, shield does nothing
-      if (cIsCangxin) {
-        result.description = '对手蓄力中，你保持防御态势';
-        return result;
-      }
+      return r;
     }
 
-    if (cIsShield) {
-      if (pMove === '波波') {
-        result.playerEnergyDelta -= 1;
-        result.description = '对手的护盾挡住了你的波波！';
-        return result;
-      } else if (pMove === '六电') {
-        result.computerEnergyDelta -= 1;
-        result.playerEnergyDelta -= 2;
-        result.description = '六电击穿对手护盾！对手损失 1 点能量';
-        return result;
-      } else if (pMove === '搓搓' || pMove === '八嘎') {
-        result.computerDefeated = true;
-        result.playerEnergyDelta -= MOVES[pMove].cost;
-        result.description = '护盾无法抵挡 ' + pMove + '！对手被击败';
-        return result;
-      }
-      if (pIsCangxin) {
-        result.description = '你蓄力中，对手保持防御态势';
-        return result;
-      }
+    if (pIsShield && cIsAttack) {
+      Object.assign(result, handleShield('player', cMove, cInfo, true));
+      return result;
+    }
+    if (cIsShield && pIsAttack) {
+      Object.assign(result, handleShield('computer', pMove, pInfo, false));
+      return result;
+    }
+
+    // Shield vs 苍心 (already handled: 苍心 gained energy above)
+    if (pIsShield && cIsCangxin) {
+      result.description = '对手蓄力中，你保持防御态势';
+      return result;
+    }
+    if (cIsShield && pIsCangxin) {
+      result.description = '你蓄力中，对手保持防御态势';
+      return result;
     }
 
     // Both 护盾
@@ -720,21 +830,15 @@
       return result;
     }
 
-    // --- Phase 4: Attack vs 苍心 (苍心 not yet handled if not in attack check) ---
-    // This is handled above in Phase 2
-
-    // --- Phase 5: Attack vs Attack ---
+    // --- 4. Attack vs Attack (power comparison) ---
     if (pIsAttack && cIsAttack) {
-      result.playerEnergyDelta -= MOVES[pMove].cost;
-      result.computerEnergyDelta -= MOVES[cMove].cost;
+      result.playerEnergyDelta -= pInfo.cost;
+      result.computerEnergyDelta -= cInfo.cost;
 
-      const pPower = MOVES[pMove].power;
-      const cPower = MOVES[cMove].power;
-
-      if (pPower > cPower) {
+      if (pInfo.power > cInfo.power) {
         result.computerDefeated = true;
         result.description = '你的 ' + pMove + ' 击败了对手的 ' + cMove + '！';
-      } else if (cPower > pPower) {
+      } else if (cInfo.power > pInfo.power) {
         result.playerDefeated = true;
         result.description = '对手的 ' + cMove + ' 击败了你的 ' + pMove + '！';
       } else {
@@ -743,99 +847,125 @@
       return result;
     }
 
-    // --- Phase 6: Attack vs Shield (already handled in shield section) ---
-    // --- Phase 7: Attack vs 苍心 (already handled in 苍心 section) ---
-
-    // Fallback (shouldn't reach here for valid moves)
     result.description = '双方对峙中...';
     return result;
   }
 
   // ==================== AI LOGIC ====================
-  function getAvailableMoves(energy) {
+  function getAvailableMoves(moveset, energy) {
     const available = [];
-    for (const [name, info] of Object.entries(MOVES)) {
-      if (energy >= info.cost || info.cost === 0) {
-        // Can always use 苍心 and 护盾 (cost 0)
-        // For attacks, need enough energy
-        if (info.type === 'attack' && energy < info.cost) continue;
-        available.push(name);
-      }
+    for (const [name, info] of Object.entries(moveset)) {
+      if (info.type === 'attack' && energy < info.cost) continue;
+      available.push(name);
     }
     return available;
   }
 
   function aiChoose(playerEnergy, computerEnergy) {
-    const available = getAvailableMoves(computerEnergy);
+    const cMoves = getComputerMoves();
+    const pMoves = getPlayerMoves();
+    const cAttacks = getAllAttackNames(cMoves);
+    const available = getAvailableMoves(cMoves, computerEnergy);
     const weights = {};
 
-    // Base weights
     for (const move of available) {
       weights[move] = 1;
     }
 
-    // Strategic adjustments
-    const playerAvailable = getAvailableMoves(playerEnergy);
-    const playerCanAttack = playerAvailable.some(m => ATTACKS.includes(m));
+    const playerAvailable = getAvailableMoves(pMoves, playerEnergy);
+    const playerCanAttack = playerAvailable.some(m => pMoves[m].type === 'attack');
     const playerHasHighEnergy = playerEnergy >= 3;
-    const playerHasLowEnergy = playerEnergy <= 1 && playerEnergy >= 0;
+    const playerHasLowEnergy = playerEnergy <= 1;
 
-    // If player has low energy, they probably need to use 苍心 → AI should attack!
-    if (playerHasLowEnergy && computerEnergy >= 1) {
-      if (available.includes('波波')) weights['波波'] += 4;
-      if (available.includes('六电') && computerEnergy >= 2) weights['六电'] += 3;
-    }
-
-    // If both have 0 energy (first turn), always 苍心 — no reason to shield
+    // First turn: both 0 energy → always 苍心
     if (computerEnergy === 0 && playerEnergy === 0) {
       if (available.includes('苍心')) weights['苍心'] += 1000;
     }
 
-    // If AI has low energy, prefer 苍心
+    // Low energy → prefer 苍心
     if (computerEnergy <= 1) {
       if (available.includes('苍心')) weights['苍心'] += 5;
     }
 
-    // If AI has lots of energy, use big attacks
-    if (computerEnergy >= 4 && available.includes('八嘎')) {
-      weights['八嘎'] += 6;
-    } else if (computerEnergy >= 3 && available.includes('搓搓')) {
-      weights['搓搓'] += 5;
+    // Player low energy (probably using 苍心) → attack!
+    if (playerHasLowEnergy && computerEnergy >= 1) {
+      for (const att of cAttacks) {
+        const cost = cMoves[att].cost;
+        if (available.includes(att) && computerEnergy >= cost) {
+          weights[att] += 3 + (5 - cost); // cheaper attacks are safer bets
+        }
+      }
     }
 
-    // If player has high energy and can attack hard, consider shield
+    // AI has lots of energy → big attacks
+    for (const att of cAttacks) {
+      const info = cMoves[att];
+      if (info.power >= 4 && computerEnergy >= info.cost && available.includes(att)) {
+        weights[att] += 5;
+      }
+    }
+
+    // Player has high energy → consider shield or counter
     if (playerHasHighEnergy && playerCanAttack) {
-      if (available.includes('护盾')) weights['护盾'] += 3;
+      if (available.includes('护盾')) weights['护盾'] += 2;
+      // Prefer power 3+ attacks to counter
+      for (const att of cAttacks) {
+        const info = cMoves[att];
+        if (info.power >= 3 && computerEnergy >= info.cost && available.includes(att)) {
+          weights[att] += 3;
+        }
+      }
     }
 
-    // If AI has moderate energy, prefer attacking over shielding
-    if (computerEnergy >= 2) {
-      if (available.includes('六电')) weights['六电'] += 2;
+    // Mid energy: prefer medium attacks
+    if (computerEnergy >= 2 && computerEnergy < 4) {
+      for (const att of cAttacks) {
+        const info = cMoves[att];
+        if (info.power === 2 && available.includes(att)) {
+          weights[att] += 2;
+        }
+      }
+    }
+
+    // Bonus moves: AI has them? Use them sometimes
+    if (state.currentPhase === 2 && state.phase1Winner === 'computer') {
+      if (available.includes('天马') && computerEnergy >= 1) {
+        weights['天马'] += 2; // good value: cost 1, power 2
+      }
+      if (available.includes('天马流星转转拳') && computerEnergy >= 3) {
+        weights['天马流星转转拳'] += 4;
+      }
     }
 
     // Learn from player history
     if (playerHistory.length >= 2) {
       const lastTwo = playerHistory.slice(-2);
-      // If player used 苍心 twice in a row, they might attack now
       if (lastTwo.every(m => m === '苍心') && playerEnergy >= 1) {
-        if (available.includes('护盾')) weights['护盾'] += 4;
-        if (available.includes('波波') && computerEnergy >= 1) weights['波波'] += 3;
+        if (available.includes('护盾')) weights['护盾'] += 3;
+        for (const att of cAttacks) {
+          if (cMoves[att].cost === 1 && computerEnergy >= 1 && available.includes(att)) {
+            weights[att] += 2;
+          }
+        }
       }
-      // If player just attacked, they might be low on energy → 苍心 next
-      if (ATTACKS.includes(lastTwo[lastTwo.length - 1]) && playerEnergy <= 1) {
-        if (available.includes('波波') && computerEnergy >= 1) weights['波波'] += 3;
-        if (available.includes('六电') && computerEnergy >= 2) weights['六电'] += 2;
+      const lastMove = lastTwo[lastTwo.length - 1];
+      if (pMoves[lastMove] && pMoves[lastMove].type === 'attack' && playerEnergy <= 1) {
+        for (const att of cAttacks) {
+          if (cMoves[att].cost <= 2 && computerEnergy >= cMoves[att].cost && available.includes(att)) {
+            weights[att] += 2;
+          }
+        }
       }
     }
 
-    // Add randomness based on AI mood
+    // Randomness
     const moodNoise = (Math.random() - 0.5) * 3;
     for (const move of available) {
       weights[move] = (weights[move] || 1) + moodNoise + (Math.random() - 0.5) * 2;
       if (weights[move] < 0.1) weights[move] = 0.1;
     }
 
-    // Weighted random selection
+    // Weighted random
     const totalWeight = available.reduce((sum, m) => sum + weights[m], 0);
     let rand = Math.random() * totalWeight;
     for (const move of available) {
@@ -856,63 +986,143 @@
     }
   }
 
+  function renderMoveButtons() {
+    const moves = getPlayerMoves();
+    const baseNames = Object.keys(BASE_MOVES);
+    const bonusNames = Object.keys(BONUS_MOVES);
+
+    // Clear
+    dom.movesGrid.innerHTML = '';
+    dom.bonusRow.innerHTML = '';
+
+    // Render base moves in grid
+    baseNames.forEach(name => {
+      if (!moves[name]) return;
+      const info = moves[name];
+      const btn = document.createElement('button');
+      btn.className = 'move-btn ' + info.cssClass;
+      btn.dataset.move = name;
+      btn.innerHTML = '<span class="icon">' + info.icon + '</span>' + name +
+        '<span class="cost">' + (info.type === 'charge' ? '+1 能量' :
+         info.type === 'shield' ? '免费' : '-' + info.cost + ' 能量') + '</span>';
+
+      if (state.awaitingPlayer && !state.gameOver) {
+        if (info.type === 'attack' && state.playerEnergy < info.cost) {
+          btn.disabled = true;
+        }
+      } else {
+        btn.disabled = true;
+      }
+
+      btn.addEventListener('click', () => handleMoveClick(name, btn));
+      dom.movesGrid.appendChild(btn);
+    });
+
+    // Render bonus moves in separate row (Phase 2 winner only)
+    bonusNames.forEach(name => {
+      if (!moves[name]) return;
+      const info = moves[name];
+      const btn = document.createElement('button');
+      btn.className = 'move-btn ' + info.cssClass;
+      btn.dataset.move = name;
+      btn.innerHTML = '<span class="bonus-badge">NEW</span>' +
+        '<span class="icon">' + info.icon + '</span>' + name +
+        '<span class="cost">-' + info.cost + ' 能量</span>';
+
+      if (state.awaitingPlayer && !state.gameOver) {
+        if (state.playerEnergy < info.cost) {
+          btn.disabled = true;
+        }
+      } else {
+        btn.disabled = true;
+      }
+
+      btn.addEventListener('click', () => handleMoveClick(name, btn));
+      dom.bonusRow.appendChild(btn);
+    });
+
+    // Update title
+    if (state.currentPhase === 2 && state.phase1Winner === 'player') {
+      dom.movesTitle.innerHTML = '⚔ 选择你的招式 <span class="bonus-hint">（含第二阶段专属技能）</span>';
+    } else {
+      dom.movesTitle.textContent = '⚔ 选择你的招式';
+    }
+  }
+
+  function handleMoveClick(move, btn) {
+    playerChoose(move);
+    btn.style.transform = 'scale(0.92)';
+    setTimeout(() => { btn.style.transform = ''; }, 150);
+
+    const moves = getPlayerMoves();
+    const info = moves[move];
+    let color = 'rgba(201,169,110,1)';
+    if (info.type === 'attack') color = info.bonus ? 'rgba(241,196,15,1)' : 'rgba(231,76,60,1)';
+    else if (info.type === 'shield') color = 'rgba(52,152,219,1)';
+    else if (info.type === 'charge') color = 'rgba(46,204,113,1)';
+    burstAtElement(btn, color);
+  }
+
   function updateUI() {
-    // Scores
     dom.playerScore.textContent = state.playerScore;
     dom.computerScore.textContent = state.computerScore;
-    dom.roundInfo.textContent = '第 ' + state.currentRound + ' 局 · 先得 ' + WIN_SCORE + ' 分者胜';
+
+    // Phase banner
+    if (state.currentPhase === 1) {
+      dom.phaseBanner.textContent = '⚔ 第一阶段';
+      dom.phaseBanner.className = 'phase1';
+      dom.roundInfo.textContent = '第 ' + state.currentRound + ' 局 · 先得 ' + WIN_SCORE + ' 分者赢下本阶段';
+    } else {
+      dom.phaseBanner.textContent = '🌟 第二阶段';
+      dom.phaseBanner.className = 'phase2';
+      dom.roundInfo.textContent = '第 ' + state.currentRound + ' 局 · 先得 ' + WIN_SCORE + ' 分者最终获胜';
+    }
+
+    // Bonus tags on scoreboard
+    if (state.currentPhase === 2) {
+      if (state.phase1Winner === 'player') {
+        dom.playerScoreboard.querySelector('.name').innerHTML = '玩家 <span class="bonus-tag">专属技能</span>';
+        dom.computerScoreboard.querySelector('.name').textContent = '电脑';
+      } else {
+        dom.computerScoreboard.querySelector('.name').innerHTML = '电脑 <span class="bonus-tag">专属技能</span>';
+        dom.playerScoreboard.querySelector('.name').textContent = '玩家';
+      }
+    }
 
     // Energy bars
     renderEnergyBar(dom.playerEnergyBar, state.playerEnergy);
     renderEnergyBar(dom.computerEnergyBar, state.computerEnergy);
 
     // Turn counter
-    if (state.turnInRound > 0) {
-      dom.turnCounter.textContent = '本局第 ' + state.turnInRound + ' 回合';
-    } else {
-      dom.turnCounter.textContent = '';
-    }
+    dom.turnCounter.textContent = state.turnInRound > 0 ? '本局第 ' + state.turnInRound + ' 回合' : '';
 
     // Move buttons
-    dom.moveBtns.forEach(btn => {
-      const move = btn.dataset.move;
-      const info = MOVES[move];
-      if (state.awaitingPlayer && !state.gameOver) {
-        if (info.type === 'attack' && state.playerEnergy < info.cost) {
-          btn.disabled = true;
-        } else {
-          btn.disabled = false;
-        }
-      } else {
-        btn.disabled = true;
-      }
-    });
+    renderMoveButtons();
   }
 
   function revealMoves(playerMove, computerMove, result) {
+    const pMoves = getPlayerMoves();
+    const cMoves = getComputerMoves();
     const pRev = dom.playerReveal;
     const cRev = dom.computerReveal;
 
-    // Reset
     pRev.className = 'move-reveal';
     cRev.className = 'move-reveal';
     pRev.textContent = '';
     cRev.textContent = '';
 
-    // Animate reveal
     setTimeout(() => {
-      pRev.textContent = (MOVES[playerMove].icon || '') + ' ' + playerMove;
-      pRev.classList.add(MOVES[playerMove].cssClass, 'shown');
+      pRev.textContent = (pMoves[playerMove].icon || '') + ' ' + playerMove;
+      pRev.classList.add(pMoves[playerMove].cssClass, 'shown');
       if (result.playerDefeated) pRev.classList.add('defeated');
       if (result.computerDefeated) pRev.classList.add('victor');
 
-      cRev.textContent = (MOVES[computerMove].icon || '') + ' ' + computerMove;
-      cRev.classList.add(MOVES[computerMove].cssClass, 'shown');
+      cRev.textContent = (cMoves[computerMove].icon || '') + ' ' + computerMove;
+      cRev.classList.add(cMoves[computerMove].cssClass, 'shown');
       if (result.computerDefeated) cRev.classList.add('defeated');
       if (result.playerDefeated) cRev.classList.add('victor');
     }, 200);
 
-    // Result text
     setTimeout(() => {
       dom.resultText.textContent = result.description;
       dom.resultText.className = '';
@@ -983,7 +1193,6 @@
     state.computerMove = null;
     state.lastResult = null;
 
-    // Clear reveals
     dom.playerReveal.className = 'move-reveal';
     dom.computerReveal.className = 'move-reveal';
     dom.playerReveal.textContent = '';
@@ -992,6 +1201,13 @@
     dom.resultText.className = '';
 
     updateUI();
+  }
+
+  function showFlash(type) {
+    const flash = document.createElement('div');
+    flash.className = 'flash ' + type;
+    document.body.appendChild(flash);
+    setTimeout(() => flash.remove(), 700);
   }
 
   function endRound(winner) {
@@ -1004,12 +1220,17 @@
       burstAtElement(dom.computerReveal, 'rgba(231,76,60,1)');
       showFlash('lose');
     }
-
     updateUI();
 
-    // Check for game over
+    // Check if someone won the current phase
     if (state.playerScore >= WIN_SCORE || state.computerScore >= WIN_SCORE) {
-      setTimeout(() => endGame(), 800);
+      if (state.currentPhase === 1) {
+        // Phase 1 just ended → transition to Phase 2
+        setTimeout(() => startPhase2(), 800);
+      } else {
+        // Phase 2 ended → game over
+        setTimeout(() => endGame(), 800);
+      }
       return;
     }
 
@@ -1018,11 +1239,43 @@
     setTimeout(() => startNewRound(), 800);
   }
 
-  function showFlash(type) {
-    const flash = document.createElement('div');
-    flash.className = 'flash ' + type;
-    document.body.appendChild(flash);
-    setTimeout(() => flash.remove(), 700);
+  function startPhase2() {
+    // Determine Phase 1 winner
+    if (state.playerScore >= WIN_SCORE) {
+      state.phase1Winner = 'player';
+    } else {
+      state.phase1Winner = 'computer';
+    }
+
+    // Save Phase 1 scores
+    state.phase1PlayerScore = state.playerScore;
+    state.phase1ComputerScore = state.computerScore;
+
+    // Reset for Phase 2
+    state.currentPhase = 2;
+    state.playerScore = 0;
+    state.computerScore = 0;
+    state.currentRound = 1;
+
+    // Announce Phase 2
+    showFlash('phase-up');
+    spawnParticles(window.innerWidth / 2, window.innerHeight / 2, 'rgba(241,196,15,1)', 60);
+
+    const winnerName = state.phase1Winner === 'player' ? '你' : '电脑';
+    dom.overlayTitle.textContent = '🌟 进入第二阶段！';
+    dom.overlayPhase.textContent = '第一阶段比分：' + state.phase1PlayerScore + ' : ' + state.phase1ComputerScore;
+    dom.overlayText.textContent = winnerName + ' 赢得第一阶段，获得专属技能：\n🦄 天马  🌟 天马流星转转拳\n\n第二阶段开始，先赢 3 局者获得最终胜利！';
+    dom.overlayBtn.textContent = '开始第二阶段';
+    dom.overlayBtn.onclick = () => {
+      dom.overlay.classList.add('hidden');
+      startNewRound();
+    };
+    dom.overlayBtn2.classList.add('hidden');
+    dom.overlay.classList.remove('hidden');
+
+    state.awaitingPlayer = false;
+    state.gameOver = false;
+    updateUI();
   }
 
   function endGame() {
@@ -1030,20 +1283,37 @@
     state.awaitingPlayer = false;
     updateUI();
 
-    if (state.playerScore >= WIN_SCORE) {
-      dom.overlayTitle.textContent = '🏆 恭喜胜利！';
-      dom.overlayText.textContent = '你的气功修炼已臻化境！\n最终比分 ' + state.playerScore + ' : ' + state.computerScore;
+    const playerWon = state.playerScore >= WIN_SCORE;
+
+    dom.overlayTitle.textContent = playerWon ? '🏆 恭喜！最终胜利！' : '💫 虽败犹荣';
+    dom.overlayPhase.textContent = '第一阶段：' + state.phase1PlayerScore + ' : ' + state.phase1ComputerScore +
+      ' | 第二阶段：' + state.playerScore + ' : ' + state.computerScore;
+
+    if (playerWon) {
+      dom.overlayText.textContent = '你的气功修炼已臻化境！\n连胜两个阶段，天下无敌！';
     } else {
-      dom.overlayTitle.textContent = '💫 虽败犹荣';
-      dom.overlayText.textContent = '继续修炼，下次一定能赢！\n最终比分 ' + state.playerScore + ' : ' + state.computerScore;
+      if (state.phase1Winner === 'player') {
+        dom.overlayText.textContent = '第一阶段取胜但未能守住优势…\n下次定能笑到最后！';
+      } else {
+        dom.overlayText.textContent = '电脑两个阶段全胜…\n继续修炼，下次一定能赢！';
+      }
     }
+
+    dom.overlayBtn.textContent = '再来一局';
+    dom.overlayBtn.onclick = resetGame;
+    dom.overlayBtn2.classList.add('hidden');
     dom.overlay.classList.remove('hidden');
+
     spawnParticles(window.innerWidth / 2, window.innerHeight / 2,
-      state.playerScore >= WIN_SCORE ? 'rgba(201,169,110,1)' : 'rgba(150,150,200,1)', 50);
+      playerWon ? 'rgba(201,169,110,1)' : 'rgba(150,150,200,1)', 60);
   }
 
   function resetGame() {
     state = {
+      currentPhase: 1,
+      phase1Winner: null,
+      phase1PlayerScore: 0,
+      phase1ComputerScore: 0,
       playerEnergy: 0,
       computerEnergy: 0,
       playerScore: 0,
@@ -1058,18 +1328,25 @@
     };
     playerHistory = [];
     aiMood = 0.5;
+
+    // Reset scoreboard names
+    dom.playerScoreboard.querySelector('.name').textContent = '玩家';
+    dom.computerScoreboard.querySelector('.name').textContent = '电脑';
+
     dom.overlay.classList.add('hidden');
     startNewRound();
   }
 
   function playerChoose(move) {
     if (!state.awaitingPlayer || state.gameOver) return;
-    if (MOVES[move].type === 'attack' && state.playerEnergy < MOVES[move].cost) return;
+
+    const pMoves = getPlayerMoves();
+    if (pMoves[move].type === 'attack' && state.playerEnergy < pMoves[move].cost) return;
 
     state.awaitingPlayer = false;
     state.playerMove = move;
     playerHistory.push(move);
-    if (playerHistory.length > 20) playerHistory.shift();
+    if (playerHistory.length > 30) playerHistory.shift();
 
     // AI chooses
     state.computerMove = aiChoose(state.playerEnergy, state.computerEnergy);
@@ -1083,33 +1360,25 @@
     state.lastResult = result;
     state.turnInRound++;
 
-    // Reveal moves with animation
     revealMoves(state.playerMove, state.computerMove, result);
 
     // Apply energy changes
     state.playerEnergy += result.playerEnergyDelta;
     state.computerEnergy += result.computerEnergyDelta;
-
-    // Clamp energy
     state.playerEnergy = Math.max(0, state.playerEnergy);
     state.computerEnergy = Math.max(0, state.computerEnergy);
 
     updateUI();
 
-    // Check for defeat
     if (result.playerDefeated || result.computerDefeated) {
       const winner = result.playerDefeated ? 'computer' : 'player';
-
-      // Update AI mood based on result
       if (result.computerDefeated) {
         aiMood = Math.min(1, aiMood + 0.15);
       } else {
         aiMood = Math.max(0, aiMood - 0.1);
       }
-
       setTimeout(() => endRound(winner), 1200);
     } else {
-      // Continue the round
       setTimeout(() => {
         state.awaitingPlayer = true;
         state.playerMove = null;
@@ -1120,48 +1389,33 @@
   }
 
   // ==================== EVENT HANDLERS ====================
-  dom.moveBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const move = btn.dataset.move;
-      playerChoose(move);
-
-      // Button press feedback
-      btn.style.transform = 'scale(0.92)';
-      setTimeout(() => { btn.style.transform = ''; }, 150);
-
-      // Spawn particles at button
-      const info = MOVES[move];
-      let color = 'rgba(201,169,110,1)';
-      if (info.type === 'attack') color = 'rgba(231,76,60,1)';
-      else if (info.type === 'shield') color = 'rgba(52,152,219,1)';
-      else if (info.type === 'charge') color = 'rgba(46,204,113,1)';
-      burstAtElement(btn, color);
-    });
+  dom.overlayBtn.addEventListener('click', () => {
+    if (dom.overlayBtn.onclick) dom.overlayBtn.onclick();
   });
-
-  dom.overlayBtn.addEventListener('click', resetGame);
   dom.rulesBtn.addEventListener('click', () => dom.rulesModal.classList.remove('hidden'));
   dom.rulesClose.addEventListener('click', () => dom.rulesModal.classList.add('hidden'));
   dom.rulesModal.addEventListener('click', (e) => {
     if (e.target === dom.rulesModal) dom.rulesModal.classList.add('hidden');
   });
 
-  // Keyboard shortcuts for testing
+  // Keyboard shortcuts
   document.addEventListener('keydown', (e) => {
     if (!state.awaitingPlayer || state.gameOver) return;
     const keys = {
       '1': '苍心', '2': '护盾', '3': '波波',
       '4': '六电', '5': '搓搓', '6': '八嘎',
+      '7': '天马', '8': '天马流星转转拳',
     };
     const move = keys[e.key];
-    if (move) playerChoose(move);
+    if (move && getPlayerMoves()[move]) playerChoose(move);
   });
 
   // ==================== INIT ====================
   startNewRound();
   console.log('🧘 苍心 · 气功对决 准备就绪！');
-  console.log('💡 提示：点击招式按钮开始对决，或按键盘 1-6 快速出招');
-  console.log('📱 分享给微信好友：把本页面链接发过去即可！');
+  console.log('⚔ 第一阶段：6种基础招式，先赢3局者获得专属技能');
+  console.log('🌟 第二阶段：赢家获得 🦄天马 和 🌟天马流星转转拳');
+  console.log('💡 键盘快捷键：1-6 基础招式，7-8 专属技能');
 })();
 </script>
 </body>
