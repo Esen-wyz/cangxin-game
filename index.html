@@ -439,12 +439,26 @@
 
   // ==================== UI ====================
   function renderEnergyBar(cont, energy) {
-    cont.innerHTML=''; const max=Math.max(8,energy+2);
-    for(let i=0;i<max;i++) { const d=document.createElement('span'); d.className='energy-dot'+(i<energy?' active':''); cont.appendChild(d); }
+    // Only update if changed
+    const dots = cont.children;
+    const max = Math.max(8, energy + 2);
+    if (dots.length !== max) {
+      cont.innerHTML = '';
+      for (let i = 0; i < max; i++) {
+        const d = document.createElement('span');
+        d.className = 'energy-dot' + (i < energy ? ' active' : '');
+        cont.appendChild(d);
+      }
+    } else {
+      for (let i = 0; i < max; i++) {
+        dots[i].className = 'energy-dot' + (i < energy ? ' active' : '');
+      }
+    }
   }
   let activeTab = 'base';
+  let movesNeedRebuild = true; // Only rebuild on phase/setup changes
 
-  function renderMoveButtons() {
+  function rebuildMoveButtons() {
     const moves = getPlayerMoves();
     const baseKeys = Object.keys(BASE_MOVES);
     const p2Keys = Object.keys(PHASE2_BONUS);
@@ -452,11 +466,12 @@
     const hasP2 = p2Keys.some(k => moves[k]);
     const hasP3 = p3Keys.some(k => moves[k]);
 
-    // Build tabs
+    // Tabs
     dom.movesTabs.innerHTML = '';
     const tabs = [{id:'base',label:'基础',cls:''}];
     if (hasP2) tabs.push({id:'p2',label:'P2技能',cls:'p2tab'});
     if (hasP3) tabs.push({id:'p3',label:'P3技能',cls:'p3tab'});
+    if (!tabs.some(t=>t.id===activeTab)) activeTab='base';
 
     tabs.forEach(t => {
       const tb = document.createElement('button');
@@ -464,62 +479,69 @@
       if (t.cls==='p2tab') tb.innerHTML = '<span class="tab-dot p2"></span>'+t.label;
       else if (t.cls==='p3tab') tb.innerHTML = '<span class="tab-dot p3"></span>'+t.label;
       else tb.textContent = '基础';
-      tb.addEventListener('click', ()=>{ activeTab=t.id; renderMoveButtons(); });
+      tb.addEventListener('click', ()=>{ activeTab=t.id; movesNeedRebuild=true; rebuildMoveButtons(); });
       dom.movesTabs.appendChild(tb);
     });
 
-    // Ensure activeTab is valid
-    if (!tabs.some(t=>t.id===activeTab)) activeTab='base';
-
-    // Render active tab moves
+    // Buttons
     dom.movesGrid.innerHTML = '';
+    const keys = activeTab==='p2' ? p2Keys : activeTab==='p3' ? p3Keys : baseKeys;
+    const src = activeTab==='p2' ? PHASE2_BONUS : activeTab==='p3' ? PHASE3_BONUS : BASE_MOVES;
 
-    const makeBtn = (name, info) => {
+    keys.forEach(name => {
+      const info = src[name];
       if (!moves[name]) return;
       const btn = document.createElement('button');
       btn.className = 'move-btn ' + info.cssClass;
       btn.dataset.move = name;
-
-      let costHTML = '';
-      if (info.chargeCost) {
-        // 冰雕: show charges remaining
-        const charges = state.playerBingdiaoCharges;
-        if (charges > 0) {
-          costHTML = '<span class="charge-indicator">×'+charges+'次</span>';
-        } else {
-          costHTML = '<span class="cost">-'+info.chargeCost+'能(换'+info.chargesPerPay+'次)</span>';
-        }
-      } else {
-        costHTML = '<span class="cost">'+(info.type==='charge'?'+1能':info.type==='shield'||info.type==='flyshield'?'免费':'-'+info.cost+'能')+'</span>';
-      }
-
-      btn.innerHTML = '<span class="icon">'+info.icon+'</span>'+name+costHTML;
-
-      if (state.awaitingPlayer && !state.gameOver) {
-        if (info.chargeCost) {
-          // 冰雕: enabled if charges>0 OR energy>=chargeCost
-          btn.disabled = !(state.playerBingdiaoCharges > 0 || state.playerEnergy >= info.chargeCost);
-        } else {
-          btn.disabled = (info.type==='attack' && state.playerEnergy < info.cost);
-        }
-      } else { btn.disabled = true; }
+      btn.innerHTML = '<span class="icon">'+info.icon+'</span>'+name+'<span class="cost"></span>';
       btn.addEventListener('click', () => handleMoveClick(name, btn));
       dom.movesGrid.appendChild(btn);
-    };
-
-    if (activeTab==='base') {
-      baseKeys.forEach(n => makeBtn(n, BASE_MOVES[n]));
-    } else if (activeTab==='p2') {
-      p2Keys.forEach(n => makeBtn(n, PHASE2_BONUS[n]));
-    } else if (activeTab==='p3') {
-      p3Keys.forEach(n => makeBtn(n, PHASE3_BONUS[n]));
-    }
+    });
 
     // Title
     let title = '⚔ 选择你的招式';
     if (hasP2) title += ' <span class="bonus-hint">+P2</span>';
     if (hasP3) title += ' <span class="bonus-hint p3">+P3</span>';
     dom.movesTitle.innerHTML = title;
+    movesNeedRebuild = false;
+  }
+
+  function refreshButtonStates() {
+    if (movesNeedRebuild) rebuildMoveButtons();
+    const moves = getPlayerMoves();
+    dom.movesGrid.querySelectorAll('.move-btn').forEach(btn => {
+      const name = btn.dataset.move;
+      const info = moves[name];
+      if (!info) return;
+
+      // Update cost/charge text
+      const costEl = btn.querySelector('.cost');
+      if (costEl) {
+        if (info.chargeCost) {
+          const charges = state.playerBingdiaoCharges;
+          if (charges > 0) {
+            costEl.className = 'charge-indicator'; costEl.textContent = '×'+charges+'次';
+          } else {
+            costEl.className = 'cost'; costEl.textContent = '-'+info.chargeCost+'能(换'+info.chargesPerPay+'次)';
+          }
+        } else {
+          costEl.className = 'cost';
+          costEl.textContent = info.type==='charge'?'+1能':info.type==='shield'||info.type==='flyshield'?'免费':'-'+info.cost+'能';
+        }
+      }
+
+      // Update disabled state
+      if (state.awaitingPlayer && !state.gameOver) {
+        if (info.chargeCost) {
+          btn.disabled = !(state.playerBingdiaoCharges > 0 || state.playerEnergy >= info.chargeCost);
+        } else {
+          btn.disabled = (info.type==='attack' && state.playerEnergy < info.cost);
+        }
+      } else {
+        btn.disabled = true;
+      }
+    });
   }
 
   function handleMoveClick(move, btn) {
@@ -558,7 +580,7 @@
     renderEnergyBar(dom.playerEnergyBar, state.playerEnergy);
     renderEnergyBar(dom.computerEnergyBar, state.computerEnergy);
     dom.turnCounter.textContent = state.turnInRound>0?'本局第'+state.turnInRound+'回合':'';
-    renderMoveButtons();
+    refreshButtonStates();
   }
 
   function revealMoves(pMove, cMove, result) {
@@ -583,10 +605,10 @@
   const canvas=dom.particles, ctx=canvas.getContext('2d'); let particles=[];
   function rsCanvas(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
   window.addEventListener('resize',rsCanvas); rsCanvas();
-  function spawnP(x,y,color,n=20){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=Math.random()*4+2;particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,decay:Math.random()*0.03+0.02,color,size:Math.random()*3+1});}}
-  function animP(){ctx.clearRect(0,0,canvas.width,canvas.height);particles=particles.filter(p=>p.life>0);for(const p of particles){p.x+=p.vx;p.y+=p.vy;p.life-=p.decay;ctx.beginPath();ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);ctx.fillStyle=p.color.replace('1)',p.life+')');ctx.fill();}requestAnimationFrame(animP);}
+  function spawnP(x,y,color,n=10){if(particles.length>120)return;n=Math.min(n,120-particles.length);for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=Math.random()*3+1;particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,decay:Math.random()*0.04+0.03,color,size:Math.random()*2+1});}}
+  function animP(){ctx.clearRect(0,0,canvas.width,canvas.height);particles=particles.filter(p=>p.life>0);for(let i=0;i<particles.length;i++){const p=particles[i];p.x+=p.vx;p.y+=p.vy;p.life-=p.decay;ctx.beginPath();ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);ctx.fillStyle=p.color.replace('1)',p.life+')');ctx.fill();}requestAnimationFrame(animP);}
   animP();
-  function burstAtEl(el,color){const r=el.getBoundingClientRect();spawnP(r.left+r.width/2,r.top+r.height/2,color,30);}
+  function burstAtEl(el,color){const r=el.getBoundingClientRect();spawnP(r.left+r.width/2,r.top+r.height/2,color,12);}
 
   // ==================== GAME FLOW ====================
   function startNewRound() {
@@ -638,6 +660,7 @@
   }
 
   function startPhase2() {
+    movesNeedRebuild = true;
     const winner = state.playerScore>=winsPerPhase?'player':'computer';
     state.phase1Winner = winner;
     state.phase1PlayerScore = state.playerScore;
@@ -646,7 +669,7 @@
 
     state.currentPhase=2; state.playerScore=0; state.computerScore=0; state.currentRound=1;
     currentPhaseHistory = { number:2, rounds:[], winner:null, playerScore:0, computerScore:0 };
-    showFlash('phase-up'); spawnP(window.innerWidth/2,window.innerHeight/2,'rgba(241,196,15,1)',60);
+    showFlash('phase-up'); spawnP(window.innerWidth/2,window.innerHeight/2,'rgba(241,196,15,1)',25);
 
     const wn = winner==='player'?'你':'电脑';
     dom.overlayTitle.textContent='🌟 进入第二阶段！';
@@ -661,6 +684,7 @@
   }
 
   function startPhase3() {
+    movesNeedRebuild = true;
     const winner = state.playerScore>=winsPerPhase?'player':'computer';
     state.phase2Winner = winner;
     state.phase2PlayerScore = state.playerScore;
@@ -669,7 +693,7 @@
 
     state.currentPhase=3; state.playerScore=0; state.computerScore=0; state.currentRound=1;
     currentPhaseHistory = { number:3, rounds:[], winner:null, playerScore:0, computerScore:0 };
-    showFlash('phase3'); spawnP(window.innerWidth/2,window.innerHeight/2,'rgba(224,86,160,1)',60);
+    showFlash('phase3'); spawnP(window.innerWidth/2,window.innerHeight/2,'rgba(224,86,160,1)',25);
 
     const wn = winner==='player'?'你':'电脑';
     dom.overlayTitle.textContent='💥 进入第三阶段！';
@@ -702,7 +726,7 @@
     dom.overlayBtn2.textContent='📊 复盘对局'; dom.overlayBtn2.className='btn-secondary';
     dom.overlayBtn2.onclick=showReplay;
     dom.overlay.classList.remove('hidden');
-    spawnP(window.innerWidth/2,window.innerHeight/2,playerWon?'rgba(201,169,110,1)':'rgba(150,150,200,1)',60);
+    spawnP(window.innerWidth/2,window.innerHeight/2,playerWon?'rgba(201,169,110,1)':'rgba(150,150,200,1)',30);
   }
 
   function showReplay() {
@@ -740,6 +764,7 @@
   }
 
   function resetGame() {
+    movesNeedRebuild = true; activeTab = 'base';
     state = {
       currentPhase:1, phase1Winner:null, phase2Winner:null,
       phase1PlayerScore:0, phase1ComputerScore:0,
@@ -826,7 +851,7 @@
     });
   });
   dom.startBtn.addEventListener('click',()=>{
-    winsPerPhase=selectedWins;
+    winsPerPhase=selectedWins; movesNeedRebuild=true;
     gameHistory.winsPerPhase=winsPerPhase;
     currentPhaseHistory={ number:1, rounds:[], winner:null, playerScore:0, computerScore:0 };
     dom.setup.classList.add('hidden');
