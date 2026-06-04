@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body {
+    margin: 0;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 20% 8%, rgba(214, 177, 94, 0.12), transparent 28%),
+      radial-gradient(circle at 85% 12%, rgba(100, 220, 200, 0.09), transparent 24%),
+      linear-gradient(180deg, #050814 0%, #08101f 46%, #120813 100%);
+    color: #efe7d0;
+    font-family: "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  button {
+    font: inherit;
+  }
+}
+
+@layer components {
+  .gold-text {
+    background: linear-gradient(180deg, #f3d892, #b8893b);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
