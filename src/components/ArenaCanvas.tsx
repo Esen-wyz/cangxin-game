@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ALL_MOVES } from '../game/constants';
-import type { MoveTable, TurnResult } from '../game/types';
+import type { MoveInfo, MoveTable, TurnResult } from '../game/types';
 
 interface ArenaCanvasProps {
   playerMoves: MoveTable;
@@ -9,57 +9,640 @@ interface ArenaCanvasProps {
   resetId: number;
 }
 
+type Side = 'player' | 'computer';
+type Pose = 'idle' | 'attack' | 'charge' | 'shield' | 'fly';
+
+interface Vec {
+  x: number;
+  y: number;
+}
+
 interface Particle {
   x: number;
   y: number;
   vx: number;
   vy: number;
-  l: number;
-  ml: number;
-  c: string;
-  s: number;
+  color: string;
+  size: number;
+  life: number;
+  maxLife: number;
+  gravity: number;
+}
+
+interface Ring {
+  x: number;
+  y: number;
+  color: string;
+  size: number;
+  start: number;
+  duration: number;
 }
 
 interface Projectile {
-  x: number;
-  y: number;
-  tx: number;
-  ty: number;
-  c: string;
-  s: number;
-  tr: string;
-  p: number;
-  sp: number;
+  from: Vec;
+  to: Vec;
+  color: string;
+  trail: string;
+  size: number;
+  start: number;
+  duration: number;
+  impacted: boolean;
 }
 
-interface Impact {
-  x: number;
-  y: number;
-  c: string;
-  s: number;
-  l: number;
-  ml: number;
+interface FighterState {
+  pose: Pose;
+  poseStart: number;
+  poseEnd: number;
+  hitUntil: number;
+  deadUntil: number;
 }
 
-interface FighterAnim {
-  x: number;
-  y: number;
-  st: { punching?: boolean; hit?: boolean; dead?: boolean };
+interface MotionState {
+  time: number;
+  lastFrame: number;
+  shake: number;
+  flashColor: string;
+  flashAlpha: number;
+}
+
+interface ArenaLayout {
+  width: number;
+  height: number;
+  groundY: number;
+  player: Vec;
+  computer: Vec;
+}
+
+interface ResultPop {
+  text: string;
+  tone: 'win' | 'lose' | 'tie';
+}
+
+const PLAYER_GLOW = '#53b7ff';
+const ENEMY_GLOW = '#ff6262';
+
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function easeOut(value: number) {
+  return 1 - Math.pow(1 - clamp(value, 0, 1), 3);
+}
+
+function phaseProgress(now: number, start: number, end: number) {
+  if (end <= start) return 1;
+  return clamp((now - start) / (end - start), 0, 1);
+}
+
+function getLayout(width: number, height: number): ArenaLayout {
+  const groundY = height * 0.78;
+  return {
+    width,
+    height,
+    groundY,
+    player: { x: width * 0.24, y: groundY },
+    computer: { x: width * 0.76, y: groundY },
+  };
+}
+
+function pointFor(layout: ArenaLayout, side: Side) {
+  return side === 'player' ? layout.player : layout.computer;
+}
+
+function opposite(side: Side): Side {
+  return side === 'player' ? 'computer' : 'player';
 }
 
 export function ArenaCanvas({ playerMoves, computerMoves, animationEvent, resetId }: ArenaCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const frameRef = useRef(0);
-  const skillTimersRef = useRef<number[]>([]);
+  const lastAnimationIdRef = useRef<number | null>(null);
+  const timersRef = useRef<number[]>([]);
+  const sizeRef = useRef({ width: 1, height: 1 });
+  const motionRef = useRef<MotionState>({ time: 0, lastFrame: 0, shake: 0, flashColor: '', flashAlpha: 0 });
   const particlesRef = useRef<Particle[]>([]);
+  const ringsRef = useRef<Ring[]>([]);
   const projectilesRef = useRef<Projectile[]>([]);
-  const impactsRef = useRef<Impact[]>([]);
-  const pAnimRef = useRef<FighterAnim>({ x: 0, y: 0, st: {} });
-  const eAnimRef = useRef<FighterAnim>({ x: 0, y: 0, st: {} });
-  const sizeRef = useRef({ w: 0, h: 0 });
-  const motionRef = useRef({ shake: 0, flashA: 0, flashC: '', animT: 0, lastT: 0 });
-  const [resultPop, setResultPop] = useState<{ text: string; tone: 'win' | 'lose' | 'tie' } | null>(null);
+  const fightersRef = useRef<Record<Side, FighterState>>({
+    player: { pose: 'idle', poseStart: 0, poseEnd: 0, hitUntil: 0, deadUntil: 0 },
+    computer: { pose: 'idle', poseStart: 0, poseEnd: 0, hitUntil: 0, deadUntil: 0 },
+  });
+  const [resultPop, setResultPop] = useState<ResultPop | null>(null);
+
+  function clearTimers() {
+    for (const timer of timersRef.current) window.clearTimeout(timer);
+    timersRef.current = [];
+  }
+
+  function clearEffects() {
+    clearTimers();
+    particlesRef.current = [];
+    ringsRef.current = [];
+    projectilesRef.current = [];
+    motionRef.current.shake = 0;
+    motionRef.current.flashAlpha = 0;
+  }
+
+  function resetScene() {
+    clearEffects();
+    fightersRef.current = {
+      player: { pose: 'idle', poseStart: 0, poseEnd: 0, hitUntil: 0, deadUntil: 0 },
+      computer: { pose: 'idle', poseStart: 0, poseEnd: 0, hitUntil: 0, deadUntil: 0 },
+    };
+    setResultPop(null);
+  }
+
+  function queue(delay: number, fn: () => void) {
+    const timer = window.setTimeout(fn, delay);
+    timersRef.current.push(timer);
+  }
+
+  function setPose(side: Side, pose: Pose, duration: number) {
+    const now = motionRef.current.time;
+    fightersRef.current[side].pose = pose;
+    fightersRef.current[side].poseStart = now;
+    fightersRef.current[side].poseEnd = now + duration;
+  }
+
+  function flash(color: string, alpha: number) {
+    motionRef.current.flashColor = color;
+    motionRef.current.flashAlpha = Math.max(motionRef.current.flashAlpha, alpha);
+  }
+
+  function shake(amount: number) {
+    motionRef.current.shake = Math.max(motionRef.current.shake, amount);
+  }
+
+  function spawnParticles(origin: Vec, color: string, count: number, speed: number, life: number, gravity = 18) {
+    for (let i = 0; i < count; i += 1) {
+      const angle = Math.random() * Math.PI * 2;
+      const velocity = 0.8 + Math.random() * speed;
+      particlesRef.current.push({
+        x: origin.x,
+        y: origin.y,
+        vx: Math.cos(angle) * velocity,
+        vy: Math.sin(angle) * velocity,
+        color,
+        size: 1.6 + Math.random() * 2.8,
+        life,
+        maxLife: life,
+        gravity,
+      });
+    }
+  }
+
+  function addRing(origin: Vec, color: string, size: number, duration = 0.45) {
+    ringsRef.current.push({ x: origin.x, y: origin.y, color, size, start: motionRef.current.time, duration });
+  }
+
+  function addProjectile(from: Vec, to: Vec, color: string, size: number, duration = 0.34, trail = color) {
+    projectilesRef.current.push({ from, to, color, trail, size, start: motionRef.current.time, duration, impacted: false });
+  }
+
+  function castSkill(move: string, side: Side) {
+    const info = ALL_MOVES[move];
+    if (!info) return;
+
+    const layout = getLayout(sizeRef.current.width, sizeRef.current.height);
+    const origin = pointFor(layout, side);
+    const target = pointFor(layout, opposite(side));
+    const dir = side === 'player' ? 1 : -1;
+    const hand = { x: origin.x + dir * 26, y: origin.y - 72 };
+    const targetChest = { x: target.x - dir * 24, y: target.y - 72 };
+    const selfCore = { x: origin.x, y: origin.y - 78 };
+
+    switch (info.anim) {
+      case 'charge':
+        setPose(side, 'charge', 0.8);
+        addRing(selfCore, '#32d582', 34, 0.55);
+        spawnParticles({ x: origin.x, y: origin.y - 16 }, '#32d582', 24, 4.2, 0.72, -22);
+        queue(180, () => spawnParticles(selfCore, '#e7fff3', 14, 2.8, 0.45, -10));
+        break;
+      case 'shield':
+        setPose(side, 'shield', 0.85);
+        addRing(selfCore, '#4fb2ff', 48, 0.65);
+        spawnParticles(selfCore, '#8bd1ff', 18, 3, 0.55, 0);
+        break;
+      case 'fly':
+        setPose(side, 'fly', 0.9);
+        addRing({ x: origin.x, y: origin.y - 104 }, '#64dcc8', 36, 0.58);
+        spawnParticles({ x: origin.x, y: origin.y - 112 }, '#dffff8', 24, 3.2, 0.72, -26);
+        break;
+      case 'bolt':
+        setPose(side, 'attack', 0.75);
+        for (let i = 0; i < 6; i += 1) {
+          queue(i * 38, () => spawnParticles({ x: hand.x + dir * i * 18, y: 18 + Math.random() * 22 }, '#fff6a6', 5, 4, 0.25, 14));
+        }
+        queue(170, () => {
+          addRing(targetChest, '#f4d03f', 58, 0.55);
+          spawnParticles(targetChest, '#f4d03f', 30, 7, 0.5, 16);
+          flash('#fff36a', 0.26);
+          shake(7);
+        });
+        break;
+      case 'fire':
+        setPose(side, 'attack', 0.72);
+        addProjectile(hand, targetChest, '#ff6b32', 9, 0.34, '#ffb347');
+        for (let i = 0; i < 7; i += 1) {
+          queue(i * 35, () => {
+            const x = hand.x + (targetChest.x - hand.x) * (i / 7);
+            spawnParticles({ x, y: origin.y - 22 + Math.random() * 8 }, '#ff8a22', 5, 3.5, 0.32, 6);
+          });
+        }
+        break;
+      case 'dark':
+        setPose(side, 'attack', 0.82);
+        spawnParticles(selfCore, '#a66cff', 18, 3.5, 0.48, -4);
+        queue(180, () => addProjectile(hand, targetChest, '#8e44ad', 13, 0.38, '#d5a4ff'));
+        queue(460, () => {
+          addRing({ x: targetChest.x, y: targetChest.y + 16 }, '#8e44ad', 72, 0.65);
+          spawnParticles(targetChest, '#d8b7ff', 24, 7, 0.58, 10);
+          shake(11);
+          flash('#9b42ff', 0.24);
+        });
+        break;
+      case 'pegasus':
+        setPose(side, 'attack', 0.78);
+        addProjectile({ x: hand.x, y: hand.y - 18 }, { x: targetChest.x, y: targetChest.y - 16 }, '#f1c40f', 11, 0.35, '#fff3a7');
+        spawnParticles({ x: hand.x, y: hand.y - 18 }, '#fff3a7', 22, 4.4, 0.56, -2);
+        break;
+      case 'meteor':
+        setPose(side, 'attack', 0.88);
+        for (let i = 0; i < 3; i += 1) {
+          queue(i * 90, () => addProjectile({ x: hand.x, y: hand.y - 8 + i * 8 }, { x: targetChest.x, y: targetChest.y - 8 + i * 8 }, '#f39c12', 8, 0.28, '#ffe28b'));
+        }
+        queue(430, () => {
+          addRing(targetChest, '#f39c12', 58, 0.55);
+          spawnParticles(targetChest, '#ffe28b', 34, 7, 0.58, 12);
+          shake(8);
+        });
+        break;
+      case 'ice':
+        setPose(side, 'attack', 0.68);
+        addProjectile(hand, targetChest, '#85c1e9', 7, 0.34, '#eaf8ff');
+        spawnParticles(hand, '#eaf8ff', 16, 2.6, 0.48, -4);
+        break;
+      case 'wing':
+        setPose(side, 'attack', 0.7);
+        addProjectile({ x: hand.x, y: hand.y - 10 }, { x: targetChest.x, y: targetChest.y - 10 }, '#e67e22', 8, 0.3, '#ffd08a');
+        spawnParticles({ x: hand.x, y: hand.y - 10 }, '#ffd08a', 18, 4.2, 0.5, 0);
+        break;
+      case 'icewing':
+        setPose(side, 'attack', 0.82);
+        addProjectile(hand, targetChest, '#bb8fce', 11, 0.36, '#dff7ff');
+        spawnParticles(hand, '#85c1e9', 14, 3.2, 0.5, -4);
+        spawnParticles(hand, '#e67e22', 14, 3.2, 0.5, -4);
+        queue(380, () => {
+          addRing(targetChest, '#bb8fce', 56, 0.58);
+          shake(8);
+        });
+        break;
+      case 'ult':
+        setPose(side, 'attack', 0.95);
+        spawnParticles(selfCore, '#e056a0', 34, 5.4, 0.62, -8);
+        queue(160, () => addProjectile(hand, targetChest, '#e056a0', 15, 0.42, '#ffd1eb'));
+        queue(520, () => {
+          addRing(targetChest, '#e056a0', 82, 0.72);
+          spawnParticles(targetChest, '#fff', 28, 8, 0.42, 8);
+          spawnParticles(targetChest, '#e056a0', 42, 10, 0.72, 12);
+          flash('#fff', 0.28);
+          shake(14);
+        });
+        break;
+      default:
+        setPose(side, info.type === 'attack' ? 'attack' : 'idle', 0.65);
+        addProjectile(hand, targetChest, '#5dade2', 8, 0.32, '#a8ddff');
+        break;
+    }
+  }
+
+  function drawBackground(ctx: CanvasRenderingContext2D, layout: ArenaLayout, now: number) {
+    const bg = ctx.createLinearGradient(0, 0, 0, layout.height);
+    bg.addColorStop(0, '#0c1730');
+    bg.addColorStop(0.5, '#07101f');
+    bg.addColorStop(1, '#170913');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, layout.width, layout.height);
+
+    ctx.save();
+    ctx.globalAlpha = 0.45;
+    ctx.strokeStyle = 'rgba(214,177,94,0.12)';
+    ctx.lineWidth = 1;
+    for (let i = -1; i < 8; i += 1) {
+      const y = layout.groundY + 8 + i * 12;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.quadraticCurveTo(layout.width * 0.5, y + 10, layout.width, y);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    ctx.fillStyle = 'rgba(214,177,94,0.08)';
+    for (let i = 0; i < 28; i += 1) {
+      const x = ((i * 53 + now * 12) % (layout.width + 80)) - 40;
+      const y = 20 + ((i * 37) % Math.max(1, layout.height - 80));
+      ctx.beginPath();
+      ctx.arc(x, y, 1 + (i % 3) * 0.45, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.fillStyle = 'rgba(0,0,0,0.24)';
+    ctx.fillRect(0, layout.groundY + 62, layout.width, layout.height - layout.groundY);
+  }
+
+  function drawFighter(ctx: CanvasRenderingContext2D, side: Side, layout: ArenaLayout, now: number) {
+    const state = fightersRef.current[side];
+    const base = pointFor(layout, side);
+    const face = side === 'player' ? 1 : -1;
+    const glow = side === 'player' ? PLAYER_GLOW : ENEMY_GLOW;
+    const enemyTint = side === 'player' ? '#66c8ff' : '#ff6d6d';
+    const progress = phaseProgress(now, state.poseStart, state.poseEnd);
+    const attackKick = state.pose === 'attack' ? Math.sin(Math.PI * progress) : 0;
+    const chargePulse = state.pose === 'charge' ? 0.7 + Math.sin(now * 20) * 0.3 : 0;
+    const flyLift = state.pose === 'fly' ? 24 + Math.sin(now * 12) * 4 : 0;
+    const idle = Math.sin(now * 2.6 + (side === 'player' ? 0 : 0.8)) * 2;
+    const hit = now < state.hitUntil;
+    const dead = now < state.deadUntil;
+    const localShake = hit ? Math.sin(now * 90) * 3 : 0;
+    const x = base.x + face * attackKick * 20 + localShake;
+    const groundY = base.y - flyLift + idle + (dead ? 8 : 0);
+    const torsoY = groundY - 76;
+
+    ctx.save();
+    if (dead) {
+      ctx.translate(x, groundY - 8);
+      ctx.rotate(face * 0.26);
+      ctx.translate(-x, -(groundY - 8));
+    }
+
+    const aura = ctx.createRadialGradient(x, torsoY, 8, x, torsoY, 80 + chargePulse * 18);
+    aura.addColorStop(0, `${glow}44`);
+    aura.addColorStop(1, 'transparent');
+    ctx.fillStyle = aura;
+    ctx.beginPath();
+    ctx.arc(x, torsoY, 82 + chargePulse * 16, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = 'rgba(0,0,0,0.42)';
+    ctx.beginPath();
+    ctx.ellipse(base.x, base.y + 5, 34, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    const fl = (value: number) => x + face * value;
+    ctx.strokeStyle = glow;
+    ctx.lineWidth = 1.7;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    ctx.fillStyle = '#0c0e13';
+    ctx.beginPath();
+    ctx.roundRect(fl(-15), groundY - 53, 12, 48, 6);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.roundRect(fl(5), groundY - 53, 12, 48, 6);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#10131a';
+    ctx.beginPath();
+    ctx.moveTo(fl(-19), groundY - 102);
+    ctx.lineTo(fl(19), groundY - 102);
+    ctx.lineTo(fl(15), groundY - 54);
+    ctx.lineTo(fl(-15), groundY - 54);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = '#d6b15e';
+    ctx.lineWidth = 3.2;
+    ctx.beginPath();
+    ctx.moveTo(fl(-18), groundY - 59);
+    ctx.lineTo(fl(18), groundY - 59);
+    ctx.stroke();
+    ctx.strokeStyle = glow;
+    ctx.lineWidth = 1.5;
+
+    const frontArm = state.pose === 'attack' ? -1.18 + progress * 0.2 : state.pose === 'shield' ? -0.62 : -0.24;
+    const backArm = state.pose === 'shield' ? 0.35 : 0.42;
+    drawArm(ctx, fl(14), groundY - 98, face, frontArm, glow, enemyTint, state.pose === 'attack');
+    drawArm(ctx, fl(-14), groundY - 96, face, backArm, glow, enemyTint, false);
+
+    ctx.fillStyle = '#090b10';
+    ctx.strokeStyle = glow;
+    ctx.lineWidth = 1.7;
+    ctx.beginPath();
+    ctx.arc(x, groundY - 122, 18, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = glow;
+    ctx.lineWidth = 2.6;
+    ctx.beginPath();
+    ctx.arc(x, groundY - 126, 18, 1.22, 1.92);
+    ctx.stroke();
+
+    ctx.fillStyle = '#050609';
+    for (const spike of [
+      { left: -16, tip: -11, top: -146, right: -6 },
+      { left: -6, tip: 0, top: -151, right: 7 },
+      { left: 5, tip: 12, top: -145, right: 17 },
+    ] as const) {
+      ctx.beginPath();
+      ctx.moveTo(fl(spike.left), groundY - 128);
+      ctx.lineTo(fl(spike.tip), groundY + spike.top);
+      ctx.lineTo(fl(spike.right), groundY - 128);
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = '#fff';
+    ctx.shadowColor = glow;
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.arc(fl(-6), groundY - 124, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(fl(6), groundY - 124, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    if (state.pose === 'shield') {
+      drawShield(ctx, x + face * 26, groundY - 88, glow, now);
+    }
+    if (hit) {
+      ctx.fillStyle = `${glow}33`;
+      ctx.beginPath();
+      ctx.arc(x, torsoY, 54, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawArm(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    face: 1 | -1,
+    rotation: number,
+    glow: string,
+    tint: string,
+    punching: boolean,
+  ) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(face * rotation);
+    ctx.fillStyle = '#11141b';
+    ctx.strokeStyle = glow;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(-5, 0, 10, 31, 5);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#06070a';
+    ctx.beginPath();
+    ctx.arc(0, 34, punching ? 9 : 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    if (punching) {
+      ctx.fillStyle = `${tint}66`;
+      ctx.beginPath();
+      ctx.arc(0, 34, 16, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawShield(ctx: CanvasRenderingContext2D, x: number, y: number, color: string, now: number) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(now * 1.6);
+    ctx.strokeStyle = `${color}cc`;
+    ctx.fillStyle = `${color}18`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i < 6; i += 1) {
+      const angle = (Math.PI * 2 * i) / 6;
+      const px = Math.cos(angle) * 32;
+      const py = Math.sin(angle) * 32;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawRings(ctx: CanvasRenderingContext2D, now: number) {
+    for (const ring of ringsRef.current) {
+      const progress = phaseProgress(now, ring.start, ring.start + ring.duration);
+      ctx.globalAlpha = 1 - progress;
+      ctx.strokeStyle = ring.color;
+      ctx.lineWidth = 4 * (1 - progress);
+      ctx.beginPath();
+      ctx.arc(ring.x, ring.y, ring.size * (0.3 + progress * 1.4), 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function drawProjectiles(ctx: CanvasRenderingContext2D, now: number) {
+    for (const projectile of projectilesRef.current) {
+      const progress = easeOut(phaseProgress(now, projectile.start, projectile.start + projectile.duration));
+      const x = projectile.from.x + (projectile.to.x - projectile.from.x) * progress;
+      const y = projectile.from.y + (projectile.to.y - projectile.from.y) * progress;
+
+      for (let i = 0; i < 4; i += 1) {
+        const back = clamp(progress - i * 0.07, 0, 1);
+        const tx = projectile.from.x + (projectile.to.x - projectile.from.x) * back;
+        const ty = projectile.from.y + (projectile.to.y - projectile.from.y) * back;
+        ctx.globalAlpha = 0.22 * (1 - i * 0.14);
+        ctx.fillStyle = projectile.trail;
+        ctx.beginPath();
+        ctx.arc(tx, ty, projectile.size * (1.8 - i * 0.25), 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = projectile.color;
+      ctx.beginPath();
+      ctx.arc(x, y, projectile.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.globalAlpha = 0.72;
+      ctx.beginPath();
+      ctx.arc(x, y, projectile.size * 0.38, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function stepEffects(dt: number, now: number) {
+    for (const particle of particlesRef.current) {
+      particle.x += particle.vx * dt * 60;
+      particle.y += particle.vy * dt * 60;
+      particle.vy += particle.gravity * dt;
+      particle.life -= dt;
+    }
+    particlesRef.current = particlesRef.current.filter((particle) => particle.life > 0);
+
+    for (const projectile of projectilesRef.current) {
+      if (!projectile.impacted && now >= projectile.start + projectile.duration) {
+        projectile.impacted = true;
+        addRing(projectile.to, projectile.color, 38, 0.42);
+        spawnParticles(projectile.to, projectile.color, 16, 5, 0.42, 10);
+      }
+    }
+    projectilesRef.current = projectilesRef.current.filter((projectile) => now < projectile.start + projectile.duration + 0.02);
+    ringsRef.current = ringsRef.current.filter((ring) => now < ring.start + ring.duration);
+
+    const motion = motionRef.current;
+    motion.shake *= 0.84;
+    if (motion.shake < 0.05) motion.shake = 0;
+    motion.flashAlpha *= 0.86;
+    if (motion.flashAlpha < 0.004) motion.flashAlpha = 0;
+
+    for (const fighter of Object.values(fightersRef.current)) {
+      if (fighter.pose !== 'idle' && now >= fighter.poseEnd) fighter.pose = 'idle';
+    }
+  }
+
+  function render(ctx: CanvasRenderingContext2D) {
+    const { width, height } = sizeRef.current;
+    const now = motionRef.current.time;
+    const layout = getLayout(width, height);
+    ctx.clearRect(0, 0, width, height);
+    drawBackground(ctx, layout, now);
+
+    const sx = (Math.random() - 0.5) * motionRef.current.shake * 2;
+    const sy = (Math.random() - 0.5) * motionRef.current.shake * 2;
+    ctx.save();
+    ctx.translate(sx, sy);
+    drawRings(ctx, now);
+    drawFighter(ctx, 'player', layout, now);
+    drawFighter(ctx, 'computer', layout, now);
+    drawProjectiles(ctx, now);
+
+    for (const particle of particlesRef.current) {
+      const alpha = clamp(particle.life / particle.maxLife, 0, 1);
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = particle.color;
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.size * alpha, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    ctx.restore();
+
+    if (motionRef.current.flashAlpha > 0) {
+      ctx.fillStyle = motionRef.current.flashColor;
+      ctx.globalAlpha = motionRef.current.flashAlpha;
+      ctx.fillRect(0, 0, width, height);
+      ctx.globalAlpha = 1;
+    }
+  }
 
   useEffect(() => {
     const canvasNode = canvasRef.current;
@@ -67,274 +650,29 @@ export function ArenaCanvas({ playerMoves, computerMoves, animationEvent, resetI
     if (!canvasNode || !wrapNode) return;
     const context = canvasNode.getContext('2d');
     if (!context) return;
-    const canvas = canvasNode;
-    const wrap = wrapNode;
-    const ctx = context;
 
-    function resize() {
-      const rect = wrap.getBoundingClientRect();
+    const resize = () => {
+      const rect = wrapNode.getBoundingClientRect();
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.max(1, Math.floor(rect.width * dpr));
-      canvas.height = Math.max(1, Math.floor(rect.height * dpr));
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      sizeRef.current = { w: rect.width, h: rect.height };
-      resetChars();
-    }
+      canvasNode.width = Math.max(1, Math.floor(rect.width * dpr));
+      canvasNode.height = Math.max(1, Math.floor(rect.height * dpr));
+      canvasNode.style.width = `${rect.width}px`;
+      canvasNode.style.height = `${rect.height}px`;
+      context.setTransform(dpr, 0, 0, dpr, 0, 0);
+      sizeRef.current = { width: rect.width, height: rect.height };
+    };
 
-    function resetChars() {
-      const { w, h } = sizeRef.current;
-      pAnimRef.current = { x: w * 0.2, y: h * 0.58, st: {} };
-      eAnimRef.current = { x: w * 0.8, y: h * 0.58, st: {} };
-    }
-
-    function drawFighter(cx: number, cy: number, face: 1 | -1, glow: string, st: FighterAnim['st']) {
-      const fl = (x: number) => cx + face * x;
-      ctx.save();
-      const aura = ctx.createRadialGradient(cx, cy - 8, 8, cx, cy - 8, 72);
-      aura.addColorStop(0, glow.replace('rgb', 'rgba').replace(')', ',0.22)'));
-      aura.addColorStop(1, 'transparent');
-      ctx.fillStyle = aura;
-      ctx.beginPath();
-      ctx.arc(cx, cy, 70, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = 'rgba(0,0,0,0.42)';
-      ctx.beginPath();
-      ctx.ellipse(cx, cy + 58, 32, 5, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.strokeStyle = glow;
-      ctx.lineWidth = 1.4;
-      ctx.fillStyle = '#111318';
-      ctx.beginPath();
-      ctx.roundRect(fl(-17), cy - 8, 34, 38, 8);
-      ctx.fill();
-      ctx.stroke();
-      ctx.strokeStyle = 'rgba(214,177,94,0.95)';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(fl(-18), cy + 22);
-      ctx.lineTo(fl(18), cy + 22);
-      ctx.stroke();
-
-      ctx.strokeStyle = glow;
-      ctx.lineWidth = 1.5;
-      const armRot = st.punching ? face * -1.05 : face * -0.25;
-      ctx.save();
-      ctx.translate(fl(13), cy - 4);
-      ctx.rotate(armRot);
-      ctx.fillStyle = '#17191f';
-      ctx.beginPath();
-      ctx.roundRect(-5, 0, 10, 27, 5);
-      ctx.fill();
-      ctx.stroke();
-      ctx.restore();
-      const fistX = fl(13) + face * Math.sin(armRot) * 27;
-      const fistY = cy - 4 + Math.cos(armRot) * 27;
-      ctx.fillStyle = '#08090d';
-      ctx.beginPath();
-      ctx.arc(fistX, fistY, st.punching ? 9 : 7, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.save();
-      ctx.translate(fl(-14), cy - 6);
-      ctx.rotate(face * 0.4);
-      ctx.fillStyle = '#14161c';
-      ctx.beginPath();
-      ctx.roundRect(-5, 0, 10, 24, 5);
-      ctx.fill();
-      ctx.stroke();
-      ctx.restore();
-
-      ctx.fillStyle = '#15171d';
-      ctx.beginPath();
-      ctx.roundRect(fl(-12), cy + 28, 10, 30, 5);
-      ctx.fill();
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.roundRect(fl(6), cy + 28, 10, 30, 5);
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = '#0d0f14';
-      ctx.strokeStyle = glow;
-      ctx.beginPath();
-      ctx.arc(cx, cy - 28, 17, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      ctx.strokeStyle = glow;
-      ctx.lineWidth = 2.4;
-      ctx.beginPath();
-      ctx.arc(cx, cy - 32, 17.5, 1.25, 1.9);
-      ctx.stroke();
-      ctx.fillStyle = '#050609';
-      for (const [a, b, c] of [
-        [-15, -35, -8],
-        [-2, -38, 2],
-        [8, -36, 15],
-      ]) {
-        ctx.beginPath();
-        ctx.moveTo(fl(a), cy - 36);
-        ctx.lineTo(fl(b), cy - 52);
-        ctx.lineTo(fl(c), cy - 36);
-        ctx.fill();
-        ctx.stroke();
-      }
-      ctx.fillStyle = '#fff';
-      ctx.shadowColor = glow;
-      ctx.shadowBlur = 10;
-      ctx.beginPath();
-      ctx.arc(fl(-6), cy - 30, 3, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(fl(6), cy - 30, 3, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      if (st.hit) {
-        ctx.fillStyle = glow.replace('rgb', 'rgba').replace(')', ',0.24)');
-        ctx.beginPath();
-        ctx.arc(cx, cy - 8, 50, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-
-    function render() {
-      const { w, h } = sizeRef.current;
-      ctx.clearRect(0, 0, w, h);
-      const bg = ctx.createLinearGradient(0, 0, 0, h);
-      bg.addColorStop(0, '#111a31');
-      bg.addColorStop(0.5, '#07101f');
-      bg.addColorStop(1, '#160913');
-      ctx.fillStyle = bg;
-      ctx.fillRect(0, 0, w, h);
-      ctx.fillStyle = 'rgba(214,177,94,0.06)';
-      for (let i = 0; i < 22; i++) {
-        const x = ((i * 47 + motionRef.current.animT * 9) % (w + 60)) - 30;
-        const y = 18 + ((i * 31) % Math.max(1, h - 52));
-        ctx.beginPath();
-        ctx.arc(x, y, 1.2 + (i % 3) * 0.5, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.fillStyle = 'rgba(214,177,94,0.08)';
-      ctx.fillRect(0, h * 0.83, w, 1.5);
-
-      const shake = motionRef.current.shake;
-      const sx = (Math.random() - 0.5) * shake * 2;
-      const sy = (Math.random() - 0.5) * shake * 2;
-      ctx.save();
-      ctx.translate(sx, sy);
-      drawFighter(pAnimRef.current.x, pAnimRef.current.y, 1, 'rgb(80,180,255)', pAnimRef.current.st);
-      drawFighter(eAnimRef.current.x, eAnimRef.current.y, -1, 'rgb(255,90,90)', eAnimRef.current.st);
-
-      for (const p of particlesRef.current) {
-        const a = p.l / p.ml;
-        ctx.globalAlpha = a;
-        ctx.fillStyle = p.c;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.s * a, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      for (const p of projectilesRef.current) {
-        const px = p.x + (p.tx - p.x) * p.p;
-        const py = p.y + (p.ty - p.y) * p.p;
-        for (let i = 0; i < 4; i += 1) {
-          const tp = p.p - i * 0.06;
-          if (tp < 0) continue;
-          ctx.fillStyle = p.tr;
-          ctx.globalAlpha = (1 - tp) * 0.25;
-          ctx.beginPath();
-          ctx.arc(p.x + (p.tx - p.x) * tp, p.y + (p.ty - p.y) * tp, p.s * (0.4 + i * 0.15), 0, Math.PI * 2);
-          ctx.fill();
-        }
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = p.c;
-        ctx.beginPath();
-        ctx.arc(px, py, p.s * 1.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#fff';
-        ctx.globalAlpha = 0.7;
-        ctx.beginPath();
-        ctx.arc(px, py, p.s * 0.5, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      for (const impact of impactsRef.current) {
-        const progress = 1 - impact.l / impact.ml;
-        const radius = impact.s * (1 + progress * 1.8);
-        ctx.globalAlpha = progress < 0.2 ? progress / 0.2 : 1;
-        ctx.strokeStyle = impact.c;
-        ctx.lineWidth = 3.5 * (1 - progress);
-        ctx.beginPath();
-        ctx.arc(impact.x, impact.y, radius, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
-      if (motionRef.current.flashA > 0) {
-        ctx.fillStyle = motionRef.current.flashC;
-        ctx.globalAlpha = motionRef.current.flashA;
-        ctx.fillRect(0, 0, w, h);
-        ctx.globalAlpha = 1;
-      }
-      ctx.restore();
-    }
-
-    function loop(t: number) {
-      const m = motionRef.current;
-      if (!m.lastT) m.lastT = t;
-      const dt = Math.min((t - m.lastT) / 1000, 0.1);
-      m.lastT = t;
-      m.animT += dt;
-      pAnimRef.current.y += Math.sin(m.animT * 2.5) * 0.2;
-      eAnimRef.current.y += Math.sin(m.animT * 2.5 + 1) * 0.2;
-      for (const p of particlesRef.current) {
-        p.x += p.vx * dt * 60;
-        p.y += p.vy * dt * 60;
-        p.l -= dt;
-        p.vy += dt * 15;
-      }
-      particlesRef.current = particlesRef.current.filter((p) => p.l > 0);
-      for (const p of projectilesRef.current) {
-        p.p += p.sp * dt * 60;
-        if (p.p >= 1) {
-          impact(p.tx, p.ty, p.c, 38);
-          spark(p.tx, p.ty, p.c, 14, 5, 0.45);
-        }
-      }
-      projectilesRef.current = projectilesRef.current.filter((p) => p.p < 1);
-      for (const i of impactsRef.current) i.l -= dt;
-      impactsRef.current = impactsRef.current.filter((i) => i.l > 0);
-      m.shake *= 0.84;
-      if (m.shake < 0.08) m.shake = 0;
-      m.flashA *= 0.88;
-      if (m.flashA < 0.005) m.flashA = 0;
-      render();
+    const loop = (timestamp: number) => {
+      const seconds = timestamp / 1000;
+      const motion = motionRef.current;
+      if (!motion.lastFrame) motion.lastFrame = seconds;
+      const dt = Math.min(seconds - motion.lastFrame, 0.1);
+      motion.lastFrame = seconds;
+      motion.time = seconds;
+      stepEffects(dt, seconds);
+      render(context);
       frameRef.current = window.requestAnimationFrame(loop);
-    }
-
-    function spark(x: number, y: number, color: string, count: number, speed: number, life: number) {
-      for (let i = 0; i < count; i += 1) {
-        const angle = Math.random() * Math.PI * 2;
-        const s = (Math.random() * speed || 3) + 1;
-        particlesRef.current.push({ x, y, vx: Math.cos(angle) * s, vy: Math.sin(angle) * s, l: life, ml: life, c: color, s: Math.random() * 3 + 1.5 });
-      }
-    }
-
-    function projectile(x: number, y: number, tx: number, ty: number, color: string, size = 6, trail = color) {
-      projectilesRef.current.push({ x, y, tx, ty, c: color, s: size, tr: trail, p: 0, sp: 0.05 + Math.random() * 0.02 });
-    }
-
-    function impact(x: number, y: number, color: string, size = 40) {
-      impactsRef.current.push({ x, y, c: color, s: size, l: 0.4, ml: 0.4 });
-    }
-
-    function shake(amount: number) {
-      motionRef.current.shake = Math.max(motionRef.current.shake, amount);
-    }
-
-    function flash(color: string, alpha = 0.4) {
-      motionRef.current.flashA = alpha;
-      motionRef.current.flashC = color;
-    }
+    };
 
     resize();
     window.addEventListener('resize', resize);
@@ -343,194 +681,86 @@ export function ArenaCanvas({ playerMoves, computerMoves, animationEvent, resetI
     return () => {
       window.removeEventListener('resize', resize);
       window.cancelAnimationFrame(frameRef.current);
-      for (const timer of skillTimersRef.current) window.clearTimeout(timer);
-      skillTimersRef.current = [];
+      clearTimers();
     };
   }, []);
 
   useEffect(() => {
-    for (const timer of skillTimersRef.current) window.clearTimeout(timer);
-    skillTimersRef.current = [];
-    particlesRef.current = [];
-    projectilesRef.current = [];
-    impactsRef.current = [];
-    motionRef.current.shake = 0;
-    motionRef.current.flashA = 0;
-    const { w, h } = sizeRef.current;
-    pAnimRef.current = { x: w * 0.2, y: h * 0.58, st: {} };
-    eAnimRef.current = { x: w * 0.8, y: h * 0.58, st: {} };
-    setResultPop(null);
+    resetScene();
   }, [resetId]);
 
   useEffect(() => {
     if (!animationEvent) return;
-    const pInfo = playerMoves[animationEvent.playerMove] ?? ALL_MOVES[animationEvent.playerMove];
-    const cInfo = computerMoves[animationEvent.computerMove] ?? ALL_MOVES[animationEvent.computerMove];
+    if (lastAnimationIdRef.current === animationEvent.id) return;
+    lastAnimationIdRef.current = animationEvent.id;
+
+    const pInfo: MoveInfo | undefined = ALL_MOVES[animationEvent.playerMove];
+    const cInfo: MoveInfo | undefined = ALL_MOVES[animationEvent.computerMove];
     if (!pInfo || !cInfo) return;
 
-    const clearFx = () => {
-      for (const timer of skillTimersRef.current) window.clearTimeout(timer);
-      skillTimersRef.current = [];
-      particlesRef.current = [];
-      projectilesRef.current = [];
-      impactsRef.current = [];
-      motionRef.current.shake = 0;
-      motionRef.current.flashA = 0;
-    };
-    const queueFx = (delay: number, fn: () => void) => {
-      const timer = window.setTimeout(fn, delay);
-      skillTimersRef.current.push(timer);
-    };
-    const sp = (x: number, y: number, c: string, n: number, speed: number, life: number) => {
-      for (let i = 0; i < n; i += 1) {
-        const angle = Math.random() * Math.PI * 2;
-        const s = (Math.random() * speed || 3) + 1;
-        particlesRef.current.push({ x, y, vx: Math.cos(angle) * s, vy: Math.sin(angle) * s, l: life, ml: life, c, s: Math.random() * 3 + 1.5 });
-      }
-    };
-    const pj = (x: number, y: number, tx: number, ty: number, c: string, size = 6, trail = c) => {
-      projectilesRef.current.push({ x, y, tx, ty, c, s: size, tr: trail, p: 0, sp: 0.05 + Math.random() * 0.02 });
-    };
-    const imp = (x: number, y: number, c: string, size = 40) => impactsRef.current.push({ x, y, c, s: size, l: 0.4, ml: 0.4 });
-    const sh = (amount: number) => {
-      motionRef.current.shake = Math.max(motionRef.current.shake, amount);
-    };
-    const fl = (color: string, alpha = 0.4) => {
-      motionRef.current.flashA = alpha;
-      motionRef.current.flashC = color;
-    };
-    const trigger = (move: string, fromX: number, fromY: number, toX: number, toY: number) => {
-      const info = ALL_MOVES[move];
-      if (!info) return;
-      const dir = fromX < toX ? 1 : -1;
-      switch (info.anim) {
-        case 'charge':
-          queueFx(0, () => { for (let i = 0; i < 15; i += 1) queueFx(i * 30, () => sp(fromX + Math.cos(i * 0.42) * 15, fromY + Math.sin(i * 0.42) * 10 - i * 3, '#2ecc71', 2, 3, 0.5)); });
-          queueFx(200, () => { imp(fromX, fromY - 10, '#2ecc71', 30); sp(fromX, fromY, '#2ecc71', 20, 5, 0.8); });
-          break;
-        case 'shield':
-          queueFx(0, () => { for (let i = 0; i < 6; i += 1) queueFx(i * 25, () => sp(fromX + Math.cos((i * Math.PI) / 3) * 25, fromY + Math.sin((i * Math.PI) / 3) * 20 - 10, '#3498db', 3, 2, 0.4)); });
-          queueFx(150, () => imp(fromX, fromY - 10, '#3498db', 35));
-          break;
-        case 'wave':
-          queueFx(80, () => { for (let i = 0; i < 3; i += 1) queueFx(i * 60, () => imp(fromX + (toX - fromX) * (i / 3), fromY - 5, '#5dade2', 20 + i * 8)); });
-          queueFx(100, () => pj(fromX + dir * 20, fromY - 5, toX, toY - 5, '#5dade2', 8, '#85c1e9'));
-          break;
-        case 'bolt':
-          queueFx(0, () => { for (let i = 0; i < 6; i += 1) queueFx(i * 40, () => { const lx = fromX + (toX - fromX) * (i / 6); sp(lx, Math.random() * 20 + 10, '#f4d03f', 3, 4, 0.3); sp(lx, Math.random() * 20 + 10, '#fff', 2, 5, 0.2); }); });
-          queueFx(200, () => { fl('#ff0', 0.35); sh(8); imp(toX, toY, '#f4d03f', 50); sp(toX, toY, '#f4d03f', 25, 7, 0.6); });
-          break;
-        case 'fire':
-          queueFx(0, () => { for (let i = 0; i < 8; i += 1) queueFx(i * 30, () => { sp(fromX + (toX - fromX) * (i / 8), fromY + 15 + Math.random() * 5, '#e74c3c', 2, 2, 0.4); sp(fromX + (toX - fromX) * (i / 8), fromY + 15, '#f90', 2, 3, 0.3); }); });
-          queueFx(200, () => { pj(fromX + dir * 20, fromY - 5, toX, toY - 5, '#e74c3c', 9, '#f90'); fl('#f60', 0.2); sh(6); });
-          queueFx(400, () => { imp(toX, toY, '#e74c3c', 45); sp(toX, toY, '#f90', 20, 6, 0.5); });
-          break;
-        case 'dark':
-          queueFx(0, () => { for (let i = 0; i < 5; i += 1) queueFx(i * 40, () => sp(fromX + Math.cos(i * 0.6) * 10, fromY + Math.sin(i * 0.6) * 8, '#8e44ad', 2, 3, 0.4)); });
-          queueFx(250, () => { pj(fromX + dir * 20, fromY - 10, toX, toY, '#8e44ad', 12, '#bb8fce'); sh(12); fl('#a0f', 0.3); });
-          queueFx(450, () => { imp(toX, toY + 10, '#8e44ad', 60); sp(toX, toY + 5, '#8e44ad', 30, 8, 0.7); sp(toX, toY, '#fff', 10, 4, 0.3); });
-          break;
-        case 'pegasus':
-          queueFx(0, () => { for (let i = 0; i < 12; i += 1) queueFx(i * 25, () => { sp(fromX + Math.cos(i * 0.5) * 8, fromY - 15 + Math.sin(i * 0.5) * 8, '#f1c40f', 2, 3, 0.5); sp(fromX - Math.cos(i * 0.5) * 8, fromY - 15 - Math.sin(i * 0.5) * 8, '#fff', 2, 2, 0.3); }); });
-          queueFx(150, () => { pj(fromX + dir * 20, fromY - 20, toX, toY - 20, '#f1c40f', 10, '#f9e79f'); fl('#ff0', 0.15); });
-          queueFx(350, () => { imp(toX, toY - 15, '#f1c40f', 45); sp(toX, toY - 15, '#f1c40f', 20, 6, 0.6); });
-          break;
-        case 'meteor':
-          queueFx(0, () => { for (let i = 0; i < 10; i += 1) queueFx(i * 35, () => { const a = i * 0.65; const r = 12 + i * 2; sp(fromX + Math.cos(a) * r, fromY + Math.sin(a) * r - 10, '#f39c12', 3, 3, 0.4); sp(fromX + Math.cos(a + 1) * r * 0.8, fromY + Math.sin(a + 1) * r * 0.8 - 10, '#fff', 2, 2, 0.25); }); });
-          queueFx(200, () => { for (let i = 0; i < 3; i += 1) queueFx(i * 80, () => pj(fromX + dir * 15, fromY - 10 + i * 5, toX, toY - 10 + i * 5, '#f39c12', 7, '#f1c40f')); });
-          queueFx(450, () => { imp(toX, toY, '#f39c12', 50); sp(toX, toY, '#f39c12', 35, 8, 0.7); sh(10); fl('#fa0', 0.25); });
-          break;
-        case 'ice':
-          queueFx(0, () => { for (let i = 0; i < 6; i += 1) queueFx(i * 30, () => { sp(fromX + dir * 15 + Math.random() * 6, fromY - 5 + Math.random() * 6, '#85c1e9', 2, 2, 0.5); sp(fromX + dir * 15, fromY - 5, '#d6eaf8', 2, 1, 0.3); }); });
-          queueFx(120, () => pj(fromX + dir * 15, fromY, toX, toY, '#85c1e9', 6, '#d6eaf8'));
-          queueFx(300, () => { imp(toX, toY, '#85c1e9', 35); sp(toX, toY, '#d6eaf8', 15, 5, 0.5); });
-          break;
-        case 'wing':
-          queueFx(0, () => { for (let i = 0; i < 8; i += 1) queueFx(i * 30, () => sp(fromX + dir * 20 + Math.cos(Math.PI * (i / 8)) * 15, fromY - 10 + Math.sin(Math.PI * (i / 8)) * 10, '#e67e22', 2, 3, 0.45)); });
-          queueFx(150, () => { pj(fromX + dir * 20, fromY - 15, toX, toY - 15, '#e67e22', 8, '#f5b041'); fl('#f80', 0.12); });
-          queueFx(350, () => { imp(toX, toY - 10, '#e67e22', 40); sp(toX, toY - 10, '#f5b041', 18, 5, 0.55); });
-          break;
-        case 'icewing':
-          queueFx(0, () => { for (let i = 0; i < 10; i += 1) queueFx(i * 25, () => { sp(fromX + Math.cos(i) * 12, fromY - 10 + Math.sin(i) * 8, '#85c1e9', 2, 2, 0.4); sp(fromX + Math.cos(i + 0.5) * 15, fromY - 10 + Math.sin(i + 0.5) * 10, '#e67e22', 2, 2, 0.4); }); });
-          queueFx(180, () => { pj(fromX + dir * 20, fromY - 10, toX, toY - 10, '#bb8fce', 10, '#d7bde2'); fl('#c8f', 0.15); sh(8); });
-          queueFx(400, () => { imp(toX, toY, '#bb8fce', 48); sp(toX, toY, '#85c1e9', 15, 5, 0.5); sp(toX, toY, '#e67e22', 15, 5, 0.5); });
-          break;
-        case 'ult':
-          queueFx(0, () => { for (let i = 0; i < 15; i += 1) queueFx(i * 20, () => { sp(fromX + Math.cos(i * 0.4) * 20, fromY + Math.sin(i * 0.4) * 15, '#e056a0', 3, 4, 0.5); sp(fromX + Math.cos(i * 0.4) * 20, fromY + Math.sin(i * 0.4) * 15, '#fff', 2, 3, 0.3); }); });
-          queueFx(200, () => { pj(fromX + dir * 20, fromY - 10, toX, toY - 10, '#e056a0', 14, '#f0a0d0'); fl('#f0f', 0.35); sh(15); });
-          queueFx(500, () => { imp(toX, toY, '#e056a0', 70); sp(toX, toY, '#e056a0', 40, 10, 0.8); sp(toX, toY, '#fff', 20, 6, 0.4); fl('#fff', 0.3); });
-          break;
-        case 'fly':
-          queueFx(0, () => { for (let i = 0; i < 12; i += 1) queueFx(i * 35, () => { sp(fromX + (Math.random() - 0.5) * 30, fromY - 20 - Math.random() * 20, '#64dcc8', 3, 2, 0.6); sp(fromX + (Math.random() - 0.5) * 20, fromY - 20, '#fff', 2, 1, 0.4); }); });
-          queueFx(150, () => imp(fromX, fromY - 25, '#64dcc8', 25));
-          break;
-      }
+    clearEffects();
+    const triggerMove = (side: Side, move: string, info: MoveInfo, canAttack: boolean) => {
+      if (info.type === 'charge') castSkill('苍心', side);
+      else if (info.type === 'shield') castSkill('护盾', side);
+      else if (info.type === 'flyshield') castSkill('飞飞', side);
+      else if (canAttack) castSkill(move, side);
     };
 
-    clearFx();
-    pAnimRef.current.st = {};
-    eAnimRef.current.st = {};
-    const p = pAnimRef.current;
-    const e = eAnimRef.current;
-    if (pInfo.type === 'charge') trigger('苍心', p.x, p.y, 0, 0);
-    else if (pInfo.type === 'shield') trigger('护盾', p.x, p.y, 0, 0);
-    else if (pInfo.type === 'flyshield') trigger('飞飞', p.x, p.y, 0, 0);
-    else if (!animationEvent.result.playerDefeated || animationEvent.result.computerDefeated) {
-      p.st.punching = true;
-      trigger(animationEvent.playerMove, p.x, p.y - 5, e.x, e.y - 5);
-    }
+    triggerMove('player', animationEvent.playerMove, pInfo, !animationEvent.result.playerDefeated || animationEvent.result.computerDefeated);
+    triggerMove('computer', animationEvent.computerMove, cInfo, !animationEvent.result.computerDefeated || animationEvent.result.playerDefeated);
 
-    if (cInfo.type === 'charge') trigger('苍心', e.x, e.y, 0, 0);
-    else if (cInfo.type === 'shield') trigger('护盾', e.x, e.y, 0, 0);
-    else if (cInfo.type === 'flyshield') trigger('飞飞', e.x, e.y, 0, 0);
-    else if (!animationEvent.result.computerDefeated || animationEvent.result.playerDefeated) {
-      e.st.punching = true;
-      trigger(animationEvent.computerMove, e.x, e.y - 5, p.x, p.y - 5);
-    }
-
-    queueFx(400, () => {
+    queue(400, () => {
+      const now = motionRef.current.time;
       if (animationEvent.result.playerDefeated) {
-        p.st.hit = true;
-        p.st.dead = true;
-        sh(14);
-        fl('#f00', 0.3);
+        fightersRef.current.player.hitUntil = now + 0.52;
+        fightersRef.current.player.deadUntil = now + 1.15;
+        shake(13);
+        flash('#f02424', 0.26);
       }
       if (animationEvent.result.computerDefeated) {
-        e.st.hit = true;
-        e.st.dead = true;
-        sh(14);
-        fl('#fff', 0.35);
+        fightersRef.current.computer.hitUntil = now + 0.52;
+        fightersRef.current.computer.deadUntil = now + 1.15;
+        shake(13);
+        flash('#ffffff', 0.28);
       }
     });
-    queueFx(900, () => {
-      p.st = { ...p.st, hit: false, punching: false };
-      e.st = { ...e.st, hit: false, punching: false };
-    });
-    queueFx(500, () => {
+
+    queue(500, () => {
       setResultPop({
         text: animationEvent.result.description,
         tone: animationEvent.result.playerDefeated ? 'lose' : animationEvent.result.computerDefeated ? 'win' : 'tie',
       });
-      queueFx(1400, () => setResultPop(null));
     });
-  }, [animationEvent, computerMoves, playerMoves]);
+    queue(1900, () => setResultPop(null));
+  }, [animationEvent]);
 
   return (
-    <div ref={wrapRef} className="relative min-h-[280px] flex-1 overflow-hidden">
+    <div className="relative flex min-h-[280px] flex-1 bg-[#070A13] p-2">
+      <div className="pointer-events-none absolute inset-x-4 top-2 z-10 h-px bg-gradient-to-r from-transparent via-[#D6B76A]/45 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-4 bottom-2 z-10 h-px bg-gradient-to-r from-transparent via-[#D6B76A]/35 to-transparent" />
+      <div className="pointer-events-none absolute inset-y-5 left-2 z-10 w-px bg-gradient-to-b from-transparent via-[#D6B76A]/25 to-transparent" />
+      <div className="pointer-events-none absolute inset-y-5 right-2 z-10 w-px bg-gradient-to-b from-transparent via-[#D6B76A]/25 to-transparent" />
+      <div
+        ref={wrapRef}
+        className="relative flex-1 overflow-hidden rounded-xl border border-[#D6B76A]/25 bg-[#0E1022] shadow-[inset_0_0_32px_rgba(75,163,255,0.08),0_0_28px_rgba(0,0,0,0.45)]"
+      >
+      <div className="pointer-events-none absolute inset-0 z-[1] bg-[linear-gradient(180deg,rgba(214,183,106,0.08),transparent_16%,transparent_74%,rgba(75,163,255,0.08))]" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-[18%] z-[1] h-px bg-gradient-to-r from-transparent via-[#4BA3FF]/35 to-transparent" />
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
       {resultPop && (
         <div
           className={[
-            'pointer-events-none absolute left-1/2 top-[28%] z-10 w-[90%] -translate-x-1/2 text-center text-sm font-black drop-shadow-[0_0_16px_rgba(0,0,0,0.9)]',
+            'pointer-events-none absolute left-1/2 top-[27%] z-10 w-[90%] -translate-x-1/2 text-center text-sm font-black drop-shadow-[0_0_16px_rgba(0,0,0,0.9)]',
             resultPop.tone === 'win' ? 'text-emerald-300' : resultPop.tone === 'lose' ? 'text-red-300' : 'text-amber-100',
           ].join(' ')}
         >
           {resultPop.text}
         </div>
       )}
-      <div className="pointer-events-none absolute inset-x-0 bottom-2 flex justify-between px-3 text-[11px] text-stone-400">
+      <div className="pointer-events-none absolute inset-x-0 bottom-2 flex justify-between px-4 text-[11px] font-bold tracking-normal text-stone-500">
         <span>PLAYER</span>
         <span>ENEMY</span>
+      </div>
       </div>
     </div>
   );

@@ -37,7 +37,7 @@ export function App() {
   }
 
   return (
-    <div className="mx-auto flex h-[100dvh] w-full max-w-[480px] flex-col overflow-hidden border-x border-white/10 bg-ink/70 shadow-2xl">
+    <div className="mx-auto flex h-[100dvh] w-full max-w-[480px] flex-col overflow-hidden border-x border-[#D6B76A]/15 bg-[#070A13]/90 shadow-[0_0_60px_rgba(0,0,0,0.65)]">
       {!game.gameStarted && (
         <SetupScreen selectedWins={game.selectedWins} onSelectWins={game.setSelectedWins} onStart={game.startGame} />
       )}
@@ -50,7 +50,8 @@ export function App() {
         resetId={game.roundResetId}
       />
 
-      <section className="z-10 border-t border-white/10 bg-[#0b1020]/95 p-2 backdrop-blur">
+      <section className="z-10 border-t border-[#D6B76A]/20 bg-[linear-gradient(180deg,rgba(14,16,34,0.98),rgba(7,10,19,0.98))] p-2 shadow-[0_-10px_30px_rgba(0,0,0,0.35)] backdrop-blur">
+        <div className="mb-2 h-px bg-gradient-to-r from-transparent via-[#D6B76A]/45 to-transparent" />
         <SkillTabs activeTab={activeTab} moves={game.playerMoves} onTabChange={setActiveTab} />
         <div className="mt-2 flex flex-wrap justify-center gap-2">
           {visibleMoveNames.map((name) => {
@@ -74,7 +75,7 @@ export function App() {
         <button
           type="button"
           onClick={() => setRulesOpen(true)}
-          className="grid h-8 w-8 place-items-center rounded-full border border-white/10 bg-night/90 text-stone-300 shadow-lg backdrop-blur"
+          className="grid h-8 w-8 place-items-center rounded-full border border-[#D6B76A]/25 bg-[#0E1022]/90 text-[#D6B76A] shadow-[0_0_18px_rgba(0,0,0,0.4)] backdrop-blur transition active:scale-95"
           aria-label="查看规则"
         >
           <Info size={16} />
@@ -83,7 +84,7 @@ export function App() {
           <button
             type="button"
             onClick={game.resetGame}
-            className="grid h-8 w-8 place-items-center rounded-full border border-white/10 bg-night/90 text-stone-300 shadow-lg backdrop-blur"
+            className="grid h-8 w-8 place-items-center rounded-full border border-[#D6B76A]/25 bg-[#0E1022]/90 text-[#D6B76A] shadow-[0_0_18px_rgba(0,0,0,0.4)] backdrop-blur transition active:scale-95"
             aria-label="重新开始"
           >
             <RotateCcw size={15} />

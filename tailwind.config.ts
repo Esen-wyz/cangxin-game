@@ -5,14 +5,14 @@ export default {
   theme: {
     extend: {
       colors: {
-        ink: '#050814',
-        night: '#0b1020',
-        jade: '#64dcc8',
-        cinnabar: '#c0392b',
-        imperial: '#d6b15e',
+        ink: '#070A13',
+        night: '#0E1022',
+        jade: '#4BA3FF',
+        cinnabar: '#FF5A6A',
+        imperial: '#D6B76A',
       },
       boxShadow: {
-        glow: '0 0 28px rgba(214, 177, 94, 0.24)',
+        glow: '0 0 28px rgba(214, 183, 106, 0.24)',
       },
     },
   },

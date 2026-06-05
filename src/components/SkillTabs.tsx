@@ -17,24 +17,24 @@ export function getMoveNamesForTab(tab: SkillTabId) {
 
 export function SkillTabs({ activeTab, moves, onTabChange }: SkillTabsProps) {
   const tabs: Array<{ id: SkillTabId; label: string; className: string }> = [
-    { id: 'base', label: '基础', className: 'data-[active=true]:border-imperial data-[active=true]:text-amber-200' },
+    { id: 'base', label: '基础', className: 'data-[active=true]:border-[#D6B76A] data-[active=true]:bg-[#D6B76A]/15 data-[active=true]:text-[#FFE6A6]' },
   ];
   if (Object.keys(PHASE2_BONUS).some((move) => moves[move])) {
-    tabs.push({ id: 'p2', label: '二阶段', className: 'data-[active=true]:border-yellow-300 data-[active=true]:text-yellow-200' });
+    tabs.push({ id: 'p2', label: 'P2 觉醒', className: 'data-[active=true]:border-yellow-300 data-[active=true]:bg-yellow-300/15 data-[active=true]:text-yellow-100' });
   }
   if (Object.keys(PHASE3_BONUS).some((move) => moves[move])) {
-    tabs.push({ id: 'p3', label: '三阶段', className: 'data-[active=true]:border-pink-300 data-[active=true]:text-pink-200' });
+    tabs.push({ id: 'p3', label: 'P3 终式', className: 'data-[active=true]:border-[#E056A0] data-[active=true]:bg-[#E056A0]/15 data-[active=true]:text-pink-100' });
   }
 
   return (
-    <div className="flex justify-center gap-2">
+    <div className="mx-auto grid max-w-[340px] grid-cols-3 gap-1 rounded-xl border border-[#D6B76A]/20 bg-black/25 p-1 shadow-[inset_0_0_18px_rgba(0,0,0,0.28)]">
       {tabs.map((tab) => (
         <button
           key={tab.id}
           type="button"
           data-active={activeTab === tab.id}
           onClick={() => onTabChange(tab.id)}
-          className={`rounded-md border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] font-bold text-stone-400 transition ${tab.className}`}
+          className={`h-8 rounded-lg border border-white/10 bg-[#0E1022]/70 px-2 text-[11px] font-black text-slate-400 transition active:scale-95 ${tab.className}`}
         >
           {tab.label}
         </button>

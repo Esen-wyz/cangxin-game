@@ -11,8 +11,8 @@ export function ReplayPanel({ history }: ReplayPanelProps) {
   return (
     <div className="space-y-2 text-left">
       {history.phases.map((phase) => (
-        <section key={phase.number} className="rounded-lg border border-white/10 bg-white/[0.03] p-2">
-          <h3 className="mb-1 text-xs font-black text-amber-200">
+        <section key={phase.number} className="rounded-xl border border-[#D6B76A]/20 bg-black/20 p-2 shadow-[inset_0_0_16px_rgba(0,0,0,0.18)]">
+          <h3 className="mb-1 text-xs font-black text-[#FFE6A6]">
             {phase.number === 1 ? '⚔ 第一' : phase.number === 2 ? '🌟 第二' : '💥 第三'}阶段 (
             {phase.winner === 'player' ? '你胜' : '电脑胜'} {phase.playerScore}:{phase.computerScore})
           </h3>
@@ -28,7 +28,7 @@ export function ReplayPanel({ history }: ReplayPanelProps) {
           </div>
         </section>
       ))}
-      <div className="text-center text-sm font-black text-amber-100">
+      <div className="rounded-xl border border-[#D6B76A]/25 bg-[#D6B76A]/10 py-2 text-center text-sm font-black text-[#FFE6A6]">
         {finalWinner}获胜 ({playerWins}:{history.phases.length - playerWins})
       </div>
     </div>
